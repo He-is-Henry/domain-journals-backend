@@ -29,7 +29,7 @@ app.use("/file", require("./routes/file"));
 app.use("/manuscript", require("./routes/manuscript"));
 
 app.all("/*splat", (req, res) => {
-  res.sendFile(filePath);
+  return res.sendFile(filePath);
 });
 app.use(errorHandler);
 
