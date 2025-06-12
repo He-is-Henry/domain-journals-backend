@@ -9,6 +9,7 @@ const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const PORT = process.env.PORT || 3500;
 const path = require("path");
+const corsOptions = require("./config/corsOptions");
 const filePath = path.resolve(__dirname, "view", "index.html");
 
 connectDB();
@@ -16,7 +17,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.use(logEvents);
 
