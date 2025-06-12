@@ -1,1 +1,1 @@
-const allowList = ["http://localhost:5173"];
+const allowList = ["http://localhost:5173", "https://domain-journals.onrender.com"];
