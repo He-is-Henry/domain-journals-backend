@@ -16,7 +16,8 @@ const addManuscript = async (req, res) => {
       text: `Hi ${manuscript.name}, your manuscript titled "${manuscript.title}" submitted to ${manuscript.journal} has been received.`,
       html: `
       <p>Hi <strong>${manuscript.name}</strong>,</p>
-      <p>Your manuscript titled "<em>${manuscript.title}</em>" submitted to <strong>${manuscript.journal}</strong> has been reviewed.</p>
+      <p>Your manuscript titled "<em>${manuscript.title}</em>" submitted to <strong>${manuscript.journal}</strong> has been received.</p>
+      
       <p>We'll contact you with the outcome or next steps shortly.</p>
       <p>Thank you for submitting to Domain Journals.</p>
   `,
