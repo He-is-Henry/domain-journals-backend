@@ -9,6 +9,7 @@ const addManuscript = async (req, res) => {
   }
   try {
     const result = await Manuscript.create(manuscript);
+    console.log(result._id);
     res.json(result);
     const html = `
   <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
@@ -28,10 +29,10 @@ const addManuscript = async (req, res) => {
          style="background-color: #4CAF50; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; margin-right: 10px; 
                 display: inline-block;">
-        Edit Manuscript
+        Edit result
       </a>
 
-      <a href="${process.env.FRONTEND_URL}/delete/${result._id}" 
+      <a href="${process.env.FRONTEND_URL}/delete/${manuscript._id}" 
          style="background-color: #f44336; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; display: inline-block;">
         Delete Manuscript
