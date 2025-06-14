@@ -4,4 +4,9 @@ const manuscriptController = require("../controller/manuscriptController");
 
 router.post("/", manuscriptController.addManuscript);
 
+router
+  .route("/:id")
+  .patch(manuscriptController.editManuscript)
+  .delete(manuscriptController.deleteManuscript);
+
 module.exports = router;
