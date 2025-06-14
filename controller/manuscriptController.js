@@ -53,6 +53,14 @@ const addManuscript = async (req, res) => {
   }
 };
 
+const getManuscript = async (req, res) => {
+  const { id } = req.params;
+  const manuscript = await Manuscript.findById(id);
+  if (!manuscript)
+    return res.status(404).json({ error: "Manuscript not found or deleted" });
+  res.json(manuscript);
+};
+
 const editManuscript = async (req, res) => {
   const { id } = req.params;
   if (!id) res.status(400).json({ error: "Id is not defined" });
