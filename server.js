@@ -28,6 +28,7 @@ app.get("/", (req, res) => {
 app.use("/file", require("./routes/file"));
 app.use("/manuscript", require("./routes/manuscript"));
 app.use("/journal", require("./routes/journal"));
+app.use("/accepted", require("./routes/acceptedManuscripts"));
 
 app.all("/*splat", (req, res) => {
   return res.sendFile(filePath);
