@@ -24,14 +24,14 @@ const addManuscript = async (req, res) => {
     <p>Thank you for submitting to <strong>Domain Journals</strong>.</p>
 
     <div style="margin-top: 30px;">
-      <a href="${process.env.FRONTEND_URL}/edit/${manuscript._id}" 
+      <a href="${process.env.FRONTEND_URL}/edit/${result._id}" 
          style="background-color: #4CAF50; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; margin-right: 10px; 
                 display: inline-block;">
         Edit Manuscript
       </a>
 
-      <a href="${process.env.FRONTEND_URL}/delete/${manuscript._id}" 
+      <a href="${process.env.FRONTEND_URL}/delete/${result._id}" 
          style="background-color: #f44336; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; display: inline-block;">
         Delete Manuscript
