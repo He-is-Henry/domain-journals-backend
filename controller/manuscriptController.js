@@ -90,6 +90,7 @@ const deleteManuscript = async (req, res) => {
   if (!id) res.status(400).json({ error: "Id is not defined" });
   try {
     const result = await Manuscript.findByIdAndDelete(id);
+    if (!result) res.status(404).json({ error: "Could not find manuscript" });
     res.json(result);
   } catch (error) {
     console.log(error);
