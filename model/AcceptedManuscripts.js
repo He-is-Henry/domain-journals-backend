@@ -10,6 +10,10 @@ const manuscriptSchema = new Schema({
   file: { type: String, required: true },
   country: { type: String, required: true },
   volume: { type: Number, default: 2026 - new Date().getFullYear() },
+  issue: { type: Number, required: true },
 });
 
-module.exports.Manuscript = mongoose.model("manuscript", manuscriptSchema);
+module.exports.Accepted = mongoose.model(
+  "acceptedManuscript",
+  manuscriptSchema
+);
