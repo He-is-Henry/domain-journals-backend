@@ -95,4 +95,9 @@ const deleteManuscript = async (req, res) => {
   }
 };
 
-module.exports = { addManuscript, editManuscript, deleteManuscript };
+module.exports = {
+  addManuscript,
+  editManuscript,
+  deleteManuscript,
+  getManuscript,
+};

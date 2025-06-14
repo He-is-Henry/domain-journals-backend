@@ -6,6 +6,7 @@ router.post("/", manuscriptController.addManuscript);
 
 router
   .route("/:id")
+  .get(manuscriptController.getManuscript)
   .patch(manuscriptController.editManuscript)
   .delete(manuscriptController.deleteManuscript);
 
