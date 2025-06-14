@@ -10,17 +10,42 @@ const addManuscript = async (req, res) => {
   try {
     const result = await Manuscript.create(manuscript);
     res.json(result);
+    const html = `
+  <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <p>Hi <strong>${manuscript.name}</strong>,</p>
+
+    <p>
+      Your manuscript titled "<em>${manuscript.title}</em>" submitted to 
+      <strong>${manuscript.journal}</strong> has been received.
+    </p>
+
+    <p>We'll contact you with the outcome or next steps shortly.</p>
+
+    <p>Thank you for submitting to <strong>Domain Journals</strong>.</p>
+
+    <div style="margin-top: 30px;">
+      <a href="${process.env.FRONTEND_URL}/edit/${manuscript._id}" 
+         style="background-color: #4CAF50; color: white; padding: 10px 20px; 
+                text-decoration: none; border-radius: 5px; margin-right: 10px; 
+                display: inline-block;">
+        Edit Manuscript
+      </a>
+
+      <a href="${process.env.FRONTEND_URL}/delete/${manuscript._id}" 
+         style="background-color: #f44336; color: white; padding: 10px 20px; 
+                text-decoration: none; border-radius: 5px; display: inline-block;">
+        Delete Manuscript
+      </a>
+      <strong style="color: red;"> Do not share this email with anyone!!!</strong>
+    </div>
+  </div>
+`;
+
     await sendMail({
       to: manuscript.email,
       subject: "manuscript received",
       text: `Hi ${manuscript.name}, your manuscript titled "${manuscript.title}" submitted to ${manuscript.journal} has been received.`,
-      html: `
-      <p>Hi <strong>${manuscript.name}</strong>,</p>
-      <p>Your manuscript titled "<em>${manuscript.title}</em>" submitted to <strong>${manuscript.journal}</strong> has been received.</p>
-      
-      <p>We'll contact you with the outcome or next steps shortly.</p>
-      <p>Thank you for submitting to Domain Journals.</p>
-  `,
+      html,
     });
   } catch (error) {
     console.log(error);
