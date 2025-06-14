@@ -32,11 +32,11 @@ const addManuscript = async (req, res) => {
         Edit result
       </a>
 
-      <a href="${process.env.FRONTEND_URL}/delete/${manuscript._id}" 
+      <a href="${process.env.FRONTEND_URL}/delete/${result._id}" 
          style="background-color: #f44336; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; display: inline-block;">
         Delete Manuscript
-      </a>
+      </a> <br/>
       <strong style="color: red;"> Do not share this email with anyone!!!</strong>
     </div>
   </div>
