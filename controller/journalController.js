@@ -5,7 +5,7 @@ const getCurrentIssue = async (req, res) => {
   if (!name) return res.status(500).json({ error: "Invalid journal name" });
   const journal = await Journal.find({ name });
   if (!journal) return res.status(404).json({ error: "Invalid journal name" });
-  const issue = journal.issue;
+  const issue = Number(journal[0].issue);
   res.json({ issue });
 };
 const changeCurrentIssue = async (req, res) => {
