@@ -4,7 +4,12 @@ const userController = require("../controller/userController");
 const verifyAdminJWT = require("../middleware/verifyAdminJWT");
 const verifyRoles = require("../middleware/verifyRoles");
 
-router.post("/", verifyRoles("admin"), userController.handleInvite);
+router.post(
+  "/",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  userController.handleInvite
+);
 router.patch("/complete/:token", userController.completeInvite);
 router.post("/login", userController.login);
 router.get("/me", verifyAdminJWT, userController.getCurrentUser);
