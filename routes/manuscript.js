@@ -1,8 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const manuscriptController = require("../controller/manuscriptController");
+const verifyAdminJWT = require("../middleware/verifyAdminJWT");
 
-router.post("/", manuscriptController.addManuscript);
+router
+  .route("/")
+  .post(manuscriptController.addManuscript)
+  .get(verifyAdminJWT, manuscriptController.getAllManuscripts);
 
 router
   .route("/:id")

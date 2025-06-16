@@ -54,6 +54,13 @@ const addManuscript = async (req, res) => {
   }
 };
 
+const getAllManuscripts = async (req, res) => {
+  const manuscripts = await Manuscript.find();
+  if (!manuscripts)
+    return res.status(404).json({ error: "Manuscript not found or deleted" });
+  res.json(manuscripts);
+};
+
 const getManuscript = async (req, res) => {
   const { id } = req.params;
   const manuscript = await Manuscript.findById(id);
@@ -90,7 +97,8 @@ const deleteManuscript = async (req, res) => {
   if (!id) res.status(400).json({ error: "Id is not defined" });
   try {
     const result = await Manuscript.findByIdAndDelete(id);
-    if (!result) res.status(404).json({ error: "Could not find manuscript" });
+    if (!result)
+      return res.status(404).json({ error: "Could not find manuscript" });
     res.json(result);
   } catch (error) {
     console.log(error);
@@ -102,4 +110,5 @@ module.exports = {
   editManuscript,
   deleteManuscript,
   getManuscript,
+  getAllManuscripts,
 };
