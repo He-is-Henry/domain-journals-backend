@@ -1,5 +1,6 @@
 const { Manuscript } = require("../model/Manuscript");
 const axios = require("axios");
+const crypto = require("crypto");
 const payForManuscript = async (req, res) => {
   const { id } = req.params;
 
@@ -35,6 +36,16 @@ const payForManuscript = async (req, res) => {
 };
 
 const confirmPayment = async (req, res) => {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const hash = crypto
+    .createHmac("sha512", secret)
+    .update(JSON.stringify(req.body))
+    .digest("hex");
+
+  const signature = req.headers["x-paystack-signature"];
+  if (hash !== signature) {
+    return res.status(401).send("Unauthorized webhook");
+  }
   const event = req.body;
 
   if (event.event === "charge.success") {
