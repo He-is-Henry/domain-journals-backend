@@ -20,8 +20,7 @@ const getArchive = async (req, res) => {
 };
 
 const publishManuscript = async (req, res) => {
-  const { id } = req.params;
-  const { issue } = req.body;
+  const { issue, id, journal } = req.body;
   try {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
@@ -31,7 +30,7 @@ const publishManuscript = async (req, res) => {
       name: manuscript.name,
       email: manuscript.email,
       title: manuscript.title,
-      journal: manuscript.journal,
+      journal,
       abstract: manuscript.abstract,
       file: manuscript.file,
       country: manuscript.country,
@@ -50,8 +49,12 @@ const publishManuscript = async (req, res) => {
         <p>Dear ${manuscript.name},</p>
         <p>We are pleased to inform you that your manuscript titled:</p>
         <blockquote>${manuscript.title}</blockquote>
-        <p>has been successfully <strong>published</strong> in the journal <strong>${manuscript.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
-        <p>Thank you for publishing with us!</p>
+        <p>has been successfully <strong>published</strong> in the journal <strong>${accepted.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
+        <p>View your manuscript here: 
+          <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
+            ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
+          </a>
+        </p>
         <br />
         <p>Regards,<br />Editorial Board</p>
       `,

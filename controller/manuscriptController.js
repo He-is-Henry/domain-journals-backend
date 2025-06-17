@@ -2,6 +2,7 @@ const { Manuscript } = require("../model/Manuscript");
 const User = require("../model/User");
 const sendMail = require("../uttils/sendMail");
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 
 const addManuscript = async (req, res) => {
   const manuscript = req?.body;
@@ -14,9 +15,12 @@ const addManuscript = async (req, res) => {
   try {
     const result = await Manuscript.create(manuscript);
     console.log(result._id);
-    res.json(result); // send response to client first
+    res.json(result);
 
-    // Compose HTML email
+    const token = jwt.sign({ id: result._id }, process.env.JWT_SECRET, {
+      expiresIn: "12h",
+    });
+
     const html = `
   <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
     <h2 style="color: #4CAF50;">📄 Manuscript Submission Received</h2>
@@ -33,13 +37,13 @@ const addManuscript = async (req, res) => {
     <p>Thank you for submitting to <strong>Domain Journals</strong>.</p>
 
     <div style="margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px;">
-      <a href="${process.env.FRONTEND_URL}/edit/${result._id}" 
+      <a href="${process.env.FRONTEND_URL}/edit/${token}" 
          style="background-color: #4CAF50; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; display: inline-block;">
         ✏️ Edit Manuscript
       </a>
 
-      <a href="${process.env.FRONTEND_URL}/delete/${result._id}" 
+      <a href="${process.env.FRONTEND_URL}/delete/${token}" 
          style="background-color: #f44336; color: white; padding: 10px 20px; 
                 text-decoration: none; border-radius: 5px; display: inline-block;">
         🗑️ Delete Manuscript
@@ -126,9 +130,34 @@ const getManuscript = async (req, res) => {
   res.json(manuscript);
 };
 
+const getManuscriptByToken = async (req, res) => {
+  const { token } = req.params;
+  try {
+    if (!token) return res.status(400).json({ error: "Token is not defined" });
+
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    const id = decoded.id;
+
+    console.log(decoded);
+
+    if (!id) return res.status(404).json({ error: "ID not found" });
+
+    const manuscript = await Manuscript.findById(id);
+    if (!manuscript)
+      return res.status(404).json({ error: "Manuscript not found or deleted" });
+
+    return res.json(manuscript);
+  } catch (error) {
+    console.log("getManuscriptByToken error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 const editManuscript = async (req, res) => {
-  const { id } = req.params;
-  if (!id) res.status(400).json({ error: "Id is not defined" });
+  const { token } = req.params;
+  if (!token) res.status(400).json({ error: "Token is not defined" });
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const id = decoded.id;
   const details = req.body;
   const { status, ...otherDetails } = details;
   if (!details) res.status(400).json({ error: "Fields to edit are required" });
@@ -151,7 +180,25 @@ const editManuscript = async (req, res) => {
 };
 
 const deleteManuscript = async (req, res) => {
+  const { token } = req.params;
+  if (!token) res.status(400).json({ error: "Token is not defined" });
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const id = decoded.id;
+  if (!id) res.status(400).json({ error: "Id is not defined" });
+  try {
+    const result = await Manuscript.findByIdAndDelete(id);
+    if (!result)
+      return res
+        .status(404)
+        .json({ error: `Could not find manuscript with id ${id}` });
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+const deleteManuscriptByAdmin = async (req, res) => {
   const { id } = req.params;
+
   if (!id) res.status(400).json({ error: "Id is not defined" });
   try {
     const result = await Manuscript.findByIdAndDelete(id);
@@ -219,7 +266,7 @@ const rejectManuscript = async (req, res) => {
 
     manuscript.status = "rejected";
     manuscript.comment = comment || "No reason provided";
-    const admin = User.findById(req.userId);
+    const admin = await User.findById(req.userId);
     manuscript.rejectedBy = admin;
     await manuscript.save();
 
@@ -312,8 +359,6 @@ const sendReminderEmail = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   addManuscript,
   editManuscript,
@@ -325,4 +370,6 @@ module.exports = {
   getManuscriptByReference,
   revokeAcceptance,
   sendReminderEmail,
+  getManuscriptByToken,
+  deleteManuscriptByAdmin,
 };

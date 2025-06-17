@@ -8,11 +8,14 @@ router
   .post(manuscriptController.addManuscript)
   .get(verifyAdminJWT, manuscriptController.getAllManuscripts);
 
+router.get("/:id", manuscriptController.getManuscript);
+router.get("/verify/:token", manuscriptController.getManuscriptByToken);
 router
-  .route("/:id")
-  .get(manuscriptController.getManuscript)
+  .route("/:token")
   .patch(manuscriptController.editManuscript)
   .delete(manuscriptController.deleteManuscript);
+
+router.delete("/admin/:id",verifyAdminJWT, manuscriptController.deleteManuscriptByAdmin);
 
 router.patch(
   "/:id/approve",
