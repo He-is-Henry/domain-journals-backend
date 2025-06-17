@@ -48,7 +48,7 @@ const confirmPayment = async (req, res) => {
   if (hash !== signature) {
     return res.status(401).send("Unauthorized webhook");
   }
-  const event = req.body;
+  const event = JSON.parse(req.body.toString("utf8"));
   console.log("from webhook", event);
   console.log(event);
   console.log(event);
