@@ -36,6 +36,7 @@ const payForManuscript = async (req, res) => {
 };
 
 const confirmPayment = async (req, res) => {
+    console.log(req.body)
   console.log("Trying to call webhook");
   const secret = process.env.PAYSTACK_SECRET_KEY;
   const hash = crypto
