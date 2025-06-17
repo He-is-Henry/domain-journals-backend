@@ -69,7 +69,7 @@ const addManuscript = async (req, res) => {
 };
 const getManuscriptByReference = async (req, res) => {
   const { paymentReference } = req.params;
-
+  console.log(paymentReference);
   try {
     const manuscript = await Manuscript.findOne({ paymentReference });
 
