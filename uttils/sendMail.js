@@ -1,11 +1,10 @@
 const nodemailer = require("nodemailer");
 
-const isProd = process.env.NODE_ENV === "production";
-
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: isProd ? 465 : 587,
-  secure: isProd,
+  port: 465,
+  secure: true,
+
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,

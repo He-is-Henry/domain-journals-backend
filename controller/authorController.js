@@ -106,9 +106,23 @@ const handleResetMail = async (req, res) => {
 
     await sendMail({
       to: email,
-      subject: "Password Reset Code",
-      text: `Your reset code is: ${resetKey}`,
-      html: `<p>Your password reset code is: <strong>${resetKey}</strong></p><p>This code will expire in 24 hours.</p>`,
+      subject: "Your Password Reset Code",
+      text: `Your password reset code is: ${resetKey}. This code will expire in 24 hours.`,
+      html: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+      <h2 style="color: #333;">Password Reset Request</h2>
+      <p>Hi there,</p>
+      <p>You requested a password reset for your account on <strong>Domain Journals</strong>.</p>
+      <p>Your reset code is:</p>
+      <div style="text-align: center; margin: 20px 0;">
+        <span style="font-size: 24px; font-weight: bold; color: #2c3e50; letter-spacing: 2px;">${resetKey}</span>
+      </div>
+      <p>This code is valid for <strong>24 hours</strong>. If you did not request this reset, you can safely ignore this message.</p>
+      <p>Thanks,<br>The Domain Journals Team</p>
+      <hr style="margin-top: 30px;" />
+      <small style="color: #888;">This is an automated message, please do not reply.</small>
+    </div>
+  `,
     });
 
     res.status(200).json({

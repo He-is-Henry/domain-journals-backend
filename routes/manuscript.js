@@ -14,4 +14,20 @@ router
   .patch(manuscriptController.editManuscript)
   .delete(manuscriptController.deleteManuscript);
 
+router.patch(
+  "/:id/approve",
+  verifyAdminJWT,
+  manuscriptController.approveManuscript
+);
+router.patch(
+  "/:id/reject",
+  verifyAdminJWT,
+  manuscriptController.rejectManuscript
+);
+
+router.get(
+  "/verify/:paymentReference",
+  manuscriptController.getManuscriptByReference
+);
+
 module.exports = router;

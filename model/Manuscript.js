@@ -10,6 +10,15 @@ const manuscriptSchema = new Schema({
   file: { type: String, required: true },
   country: { type: String, required: true },
   volume: { type: Number, default: 2026 - new Date().getFullYear() },
+  status: {
+    type: String,
+    enum: ["under-review", "approved", "paid", "rejected"],
+    default: "under-review",
+  },
+  comment: String,
+  rejectedBy: String,
+  paymentReference: String,
+  
 });
 
 module.exports.Manuscript = mongoose.model("manuscript", manuscriptSchema);
