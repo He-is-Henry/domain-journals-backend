@@ -20,7 +20,22 @@ router.patch(
   manuscriptController.approveManuscript
 );
 router.patch(
+  "/:id/remind",
+  verifyAdminJWT,
+  manuscriptController.sendReminderEmail
+);
+router.patch(
+  "/:id/revoke",
+  verifyAdminJWT,
+  manuscriptController.revokeAcceptance
+);
+router.patch(
   "/:id/reject",
+  verifyAdminJWT,
+  manuscriptController.rejectManuscript
+);
+router.patch(
+  "/:id/publish",
   verifyAdminJWT,
   manuscriptController.rejectManuscript
 );

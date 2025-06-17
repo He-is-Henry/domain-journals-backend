@@ -130,13 +130,14 @@ const editManuscript = async (req, res) => {
   const { id } = req.params;
   if (!id) res.status(400).json({ error: "Id is not defined" });
   const details = req.body;
+  const { status, ...otherDetails } = details;
   if (!details) res.status(400).json({ error: "Fields to edit are required" });
 
   try {
     const result = await Manuscript.findByIdAndUpdate(
       id,
       {
-        $set: details,
+        $set: otherDetails,
       },
       {
         $new: true,
@@ -216,14 +217,12 @@ const rejectManuscript = async (req, res) => {
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
 
-    // Update status and save rejection comment (optional: add a 'rejectionReason' field in schema)
     manuscript.status = "rejected";
     manuscript.comment = comment || "No reason provided";
     const admin = User.findById(req.userId);
     manuscript.rejectedBy = admin;
     await manuscript.save();
 
-    // Send email
     await sendMail({
       to: manuscript.email,
       subject: "Manuscript Submission – Decision Notification",
@@ -251,6 +250,69 @@ const rejectManuscript = async (req, res) => {
     res.status(500).json({ error: "Rejection failed." });
   }
 };
+const revokeAcceptance = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const manuscript = await Manuscript.findById(id);
+    if (!manuscript) return res.status(404).json({ message: "Not found" });
+
+    manuscript.status = "under-review";
+    await manuscript.save();
+
+    res.json({ message: "Manuscript reverted to under-review." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to revoke acceptance." });
+  }
+};
+
+const sendReminderEmail = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const manuscript = await Manuscript.findById(id);
+    if (!manuscript)
+      return res.status(404).json({ error: "Manuscript not found" });
+
+    if (manuscript.status !== "approved") {
+      return res
+        .status(400)
+        .json({ error: "Only approved manuscripts can receive reminders." });
+    }
+
+    const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
+
+    await sendMail({
+      to: manuscript.email,
+      subject: "Reminder: Complete Your Manuscript Payment",
+      text: `Hi ${manuscript.name}, this is a reminder to complete payment for your approved manuscript. Use the link: ${paymentLink}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+          <p>Hi <strong>${manuscript.name}</strong>,</p>
+          <p>This is a friendly reminder to complete the payment for your manuscript titled "<em>${manuscript.title}</em>", which has already been <strong>approved</strong>.</p>
+          <p>Please use the button below to make your payment:</p>
+          <div style="margin-top: 20px;">
+            <a href="${paymentLink}" 
+              style="background-color: #f57c00; color: white; padding: 12px 24px; 
+              text-decoration: none; border-radius: 5px;">
+              Pay Now
+            </a>
+          </div>
+          <p>If you’ve already paid, please ignore this message or reply with proof of payment.</p>
+          <p><strong>Domain Journals Team</strong></p>
+        </div>
+      `,
+    });
+
+    res.status(200).json({ message: "Reminder email sent." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to send reminder email" });
+  }
+};
+
+
 
 module.exports = {
   addManuscript,
@@ -261,4 +323,6 @@ module.exports = {
   approveManuscript,
   rejectManuscript,
   getManuscriptByReference,
+  revokeAcceptance,
+  sendReminderEmail,
 };
