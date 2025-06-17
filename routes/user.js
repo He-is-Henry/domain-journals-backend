@@ -13,6 +13,7 @@ router.post(
 router.patch("/complete/:token", userController.completeInvite);
 router.post("/login", userController.login);
 router.get("/me", verifyAdminJWT, userController.getCurrentUser);
+router.patch("/avatar", verifyAdminJWT, userController.updateAvatar);
 
 module.exports = router;
 

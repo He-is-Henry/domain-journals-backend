@@ -7,8 +7,34 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "manuscripts",
     resource_type: "raw",
+    format: undefined,
+    public_id: (req, file) => {
+      const timestamp = Date.now();
+      const originalExt =
+        req.body.extension || file.originalname.split(".").pop();
+      console.log("From cloudinary settings", file);
+      const originalName = file.originalname.split(".")[0];
+      return `${originalName}_${timestamp}.${originalExt}`;
+    },
   },
 });
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Invalid file type. Only .doc, .docx, and .pdf are allowed."),
+      false
+    );
+  }
+};
 
 const imageStorage = new CloudinaryStorage({
   cloudinary,
@@ -18,6 +44,7 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage, fileFilter });
 const uploadImage = multer({ storage: imageStorage });
+
 module.exports = { upload, uploadImage };

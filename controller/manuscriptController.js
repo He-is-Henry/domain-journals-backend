@@ -1,5 +1,6 @@
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
+const mongoose = require("mongoose");
 
 const addManuscript = async (req, res) => {
   const manuscript = req?.body;
@@ -55,10 +56,35 @@ const addManuscript = async (req, res) => {
 };
 
 const getAllManuscripts = async (req, res) => {
-  const manuscripts = await Manuscript.find();
-  if (!manuscripts)
-    return res.status(404).json({ error: "Manuscript not found or deleted" });
-  res.json(manuscripts);
+  try {
+    const manuscripts = await Manuscript.find();
+    if (!manuscripts || manuscripts.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No manuscripts found or they have been deleted" });
+    }
+
+    const journals = mongoose.connection.db.collection("journals");
+
+    const fullManuscriptDetails = await Promise.all(
+      manuscripts.map(async (manuscript) => {
+        manuscript = manuscript.toObject();
+        manuscript.volume = 2026 - new Date().getFullYear();
+
+        const journal = await journals.findOne({ name: manuscript.journal });
+        manuscript.issue = journal?.issue || null;
+
+        console.log(journal);
+
+        return manuscript;
+      })
+    );
+
+    res.json(fullManuscriptDetails.reverse());
+  } catch (err) {
+    console.error("Error getting manuscripts:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 };
 
 const getManuscript = async (req, res) => {

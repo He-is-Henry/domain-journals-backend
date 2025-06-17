@@ -77,7 +77,7 @@ const completeInvite = async (req, res) => {
 
     res.status(200).json({ message: "Account setup complete" });
   } catch (err) {
-    console.error("Invite acceptance failed:", err.stack);
+    console.log("Invite acceptance failed:", err.stack);
     res.status(401).json({ error: "Invalid or expired invite link" });
   }
 };
@@ -91,10 +91,10 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user || !user.password)
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "User doesn'exist" });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Invalid credentials" });
+    if (!match) return res.status(401).json({ error: "Incorrect password" });
 
     const token = jwt.sign(
       {
@@ -129,9 +129,47 @@ const login = async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
+
+const updateAvatar = async (req, res) => {
+  const { userId, avatarUrl } = req.body;
+
+  console.log(avatarUrl)
+
+  if (!userId || !avatarUrl) {
+    return res.status(400).json({ error: "Missing userId or avatarUrl" });
+  }
+  if (req.userId !== userId)
+    return res.status(403).json({ error: "You're not allowed to do this" });
+
+  try {
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { profilePicture: avatarUrl },
+      { new: true }
+    ).select("name email profilePicture ");
+    console.log(updated);
+
+    if (!updated) {
+      return res.status(404).json({ error: "Author not found" });
+    }
+
+    res.status(200).json({ message: "Avatar updated", author: updated });
+  } catch (err) {
+    console.log("Avatar update error:", err.stack);
+    res.status(500).json({ error: "Could not update avatar" });
+  }
+};
+
 const getCurrentUser = async (req, res) => {
   const userId = req.userId;
   const user = await User.findById(userId).select("-password");
   res.status(200).json(user);
 };
-module.exports = { handleInvite, completeInvite, login, getCurrentUser };
+
+module.exports = {
+  handleInvite,
+  completeInvite,
+  login,
+  getCurrentUser,
+  updateAvatar,
+};
