@@ -3,7 +3,7 @@ const router = express.Router();
 const paymentController = require("../controller/paymentController");
 router.post(
   "/webhook",
-  express.json({ type: "*/*" }),
+  express.raw({ type: "application/json" }),
   paymentController.confirmPayment
 );
 router.post("/manuscript/:id", paymentController.payForManuscript);
