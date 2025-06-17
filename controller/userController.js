@@ -110,7 +110,7 @@ const login = async (req, res) => {
     res
       .cookie("admin", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production" ? true : false,
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         maxAge: 2 * 24 * 60 * 60 * 1000,
       })
@@ -133,7 +133,7 @@ const login = async (req, res) => {
 const updateAvatar = async (req, res) => {
   const { userId, avatarUrl } = req.body;
 
-  console.log(avatarUrl)
+  console.log(avatarUrl);
 
   if (!userId || !avatarUrl) {
     return res.status(400).json({ error: "Missing userId or avatarUrl" });
