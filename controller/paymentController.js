@@ -7,7 +7,7 @@ const payForManuscript = async (req, res) => {
   try {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript) return res.status(404).json({ error: "Not found" });
-
+    console.log("manuscript ID", manuscript.id);
     const response = await axios.post(
       "https://api.paystack.co/transaction/initialize",
       {
@@ -47,6 +47,8 @@ const confirmPayment = async (req, res) => {
     return res.status(401).send("Unauthorized webhook");
   }
   const event = req.body;
+  console.log("from webhook", event);
+  console.log(event);
   console.log(event);
 
   if (event.event === "charge.success") {
