@@ -47,11 +47,13 @@ const confirmPayment = async (req, res) => {
     return res.status(401).send("Unauthorized webhook");
   }
   const event = req.body;
+  console.log(event);
 
   if (event.event === "charge.success") {
     const data = event.data;
 
     const manuscriptId = data.metadata?.manuscriptId;
+    console.log(manuscriptId);
 
     if (manuscriptId) {
       await Manuscript.findByIdAndUpdate(manuscriptId, {
