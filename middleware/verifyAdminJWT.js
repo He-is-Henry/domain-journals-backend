@@ -4,7 +4,7 @@ const verifyAdminJWT = async (req, res, next) => {
     const token = req.cookies?.admin;
     if (!token) {
       console.log("No token");
-      return res.sendStatus(401);
+      return res.status(401).json({ error: "Token not found" });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userData.id;
