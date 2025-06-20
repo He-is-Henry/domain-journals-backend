@@ -6,4 +6,4 @@ const journalSchema = new Schema({
   issue: { type: Number, required: true },
 });
 
-module.exports.Journal = mongoose.model("journal", journalSchema);
+module.exports.Journal = mongoose.model("Journal", journalSchema);

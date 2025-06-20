@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema(
     resetKeyExpires: {
       type: Date,
     },
+    access: String,
   },
   {
     timestamps: true,

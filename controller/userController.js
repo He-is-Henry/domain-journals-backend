@@ -6,13 +6,16 @@ const bcrypt = require("bcrypt");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const handleInvite = async (req, res) => {
-  const { email, role } = req.body;
-
+  const { email, role, access } = req.body;
   if (!email) {
     return res.status(400).json({ error: "Email required" });
   }
   const userRole = role ? role : "editor";
-
+  if (userRole === "editor" && !access) {
+    return res
+      .status(400)
+      .json({ error: "Access specification required for editors" });
+  }
   try {
     const existing = await User.findOne({ email });
     if (existing) {
@@ -22,6 +25,7 @@ const handleInvite = async (req, res) => {
     const user = await User.create({
       email,
       role: userRole,
+      access,
       password: undefined,
     });
 
@@ -61,7 +65,6 @@ const completeInvite = async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decoded.userData);
     const userId = decoded.userData.id;
 
     const user = await User.findById(userId);
@@ -101,6 +104,7 @@ const login = async (req, res) => {
         userData: {
           id: user._id,
           role: user.role,
+          access: user.access,
         },
       },
       process.env.JWT_SECRET,
@@ -150,10 +154,10 @@ const updateAvatar = async (req, res) => {
     console.log(updated);
 
     if (!updated) {
-      return res.status(404).json({ error: "Author not found" });
+      return res.status(404).json({ error: "user not found" });
     }
 
-    res.status(200).json({ message: "Avatar updated", author: updated });
+    res.status(200).json({ message: "Avatar updated", user: updated });
   } catch (err) {
     console.log("Avatar update error:", err.stack);
     res.status(500).json({ error: "Could not update avatar" });
@@ -166,10 +170,164 @@ const getCurrentUser = async (req, res) => {
   res.status(200).json(user);
 };
 
+const getAllUsers = async (req, res) => {
+  const allUsers = await User.find().select("-password");
+  res.json(allUsers);
+};
+
+const getUser = async (req, res) => {
+  const { userId } = req.body;
+  const user = await User.findById(userId).select("-password");
+  res.status(200).json(user);
+};
+const changeRole = async (req, res) => {
+  const { userId } = req.params;
+  const { role, access } = req.role;
+  const acceptedRoles = ["editor", "admin"];
+  if (!acceptedRoles.includes(role))
+    return res.status(409).json({ error: "invalid user role" });
+  const user = await User.findById(userId);
+  if (role === "editor" && !access)
+    return res.status(400).json({ error: "Editors need an access field" });
+  if (user.role === role)
+    return res.status(409).json(`User is already an ${role}`);
+  user.role = role;
+  if (role === "editor") user.access = access;
+  const result = await user.save();
+  res.json(result);
+};
+
+const sendResetKey = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ error: "No user found with that email" });
+
+    const resetKey = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 24 * 60 * 60 * 1000;
+
+    user.resetKey = resetKey;
+    user.resetKeyExpires = expiry;
+    await user.save();
+
+    await sendMail({
+      to: email,
+      subject: "Your Password Reset Code",
+      text: `Your password reset code is: ${resetKey}. This code will expire in 24 hours.`,
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p>Hi there,</p>
+        <p>You requested a password reset for your account on <strong>Domain Journals</strong>.</p>
+        <p>Your reset code is:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <span style="font-size: 24px; font-weight: bold; color: #2c3e50; letter-spacing: 2px;">${resetKey}</span>
+        </div>
+        <p>This code is valid for <strong>24 hours</strong>. If you did not request this reset, you can safely ignore this message.</p>
+        <p>Thanks,<br>The Domain Journals Team</p>
+        <hr style="margin-top: 30px;" />
+        <small style="color: #888;">This is an automated message, please do not reply.</small>
+      </div>
+    `,
+    });
+
+    res.status(200).json({
+      message: "Reset code sent to email",
+      userId: user._id,
+    });
+  } catch (err) {
+    console.error("Reset mail error:", err.stack);
+    res.status(500).json({ error: "Could not send reset mail" });
+  }
+};
+const verifyResetKey = async (req, res) => {
+  const { id, resetKey } = req.body;
+
+  if (!id || !resetKey) {
+    return res
+      .status(400)
+      .json({ error: "User ID and reset key are required" });
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user || !user.resetKey || !user.resetKeyExpires) {
+      return res
+        .status(400)
+        .json({ error: "Invalid or expired reset request" });
+    }
+
+    const now = Date.now();
+
+    if (user.resetKey !== resetKey) {
+      return res.status(401).json({ error: "Invalid reset key" });
+    }
+
+    if (user.resetKeyExpires < now) {
+      return res.status(410).json({ error: "Reset key has expired" });
+    }
+    user.resetKeyVerified = true;
+    user.save();
+
+    res.status(200).json({ message: "Reset key verified" });
+  } catch (err) {
+    console.error("Verify key error:", err.stack);
+    res.status(500).json({ error: "Failed to verify reset key" });
+  }
+};
+
+const handleResetPassword = async (req, res) => {
+  const { userId, resetKey, newPassword } = req.body;
+
+  if (!userId || !resetKey || !newPassword)
+    return res.status(400).json({ error: "Missing required field (id)" });
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "user not found" });
+
+    if (
+      !user.resetKey ||
+      user.resetKey !== resetKey ||
+      Date.now() > user.resetKeyExpires
+    ) {
+      return res.status(403).json({ error: "Invalid or expired reset key" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+
+    user.resetKey = undefined;
+    user.resetKeyExpires = undefined;
+
+    await user.save();
+    res
+      .clearCookie("jwt", {
+        httpOnly: true,
+        maxAge: 60 * 60 * 24 * 365 * 1000,
+        scure: false,
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      })
+      .status(200)
+      .json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error("Reset password error:", err.stack);
+    res.status(500).json({ error: "Could not reset password" });
+  }
+};
 module.exports = {
+  sendResetKey,
+  verifyResetKey,
+  handleResetPassword,
   handleInvite,
+  getUser,
   completeInvite,
   login,
+  changeRole,
   getCurrentUser,
   updateAvatar,
+  getAllUsers,
 };

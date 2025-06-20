@@ -4,6 +4,10 @@ const sendMail = require("../uttils/sendMail");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 
+const getUserManuscript = async (req, res) => {
+  const manuscripts = await Manuscript.find({ authorId: req.userId });
+  res.json(manuscripts);
+};
 const addManuscript = async (req, res) => {
   const manuscript = req?.body;
   console.log(req.body);
@@ -11,6 +15,7 @@ const addManuscript = async (req, res) => {
   if (!manuscript || Object.keys(manuscript).length === 0) {
     return res.status(400).json({ error: "A manuscript is required" });
   }
+  manuscript.authorId = req.userId;
 
   try {
     const result = await Manuscript.create(manuscript);
@@ -71,6 +76,7 @@ const addManuscript = async (req, res) => {
     return res.status(500).json({ error: "Failed to submit manuscript" });
   }
 };
+
 const getManuscriptByReference = async (req, res) => {
   const { paymentReference } = req.params;
   console.log(paymentReference);
@@ -92,7 +98,13 @@ const getManuscriptByReference = async (req, res) => {
 
 const getAllManuscripts = async (req, res) => {
   try {
-    const manuscripts = await Manuscript.find();
+    const manuscripts =
+      req.role === "editor"
+        ? await Manuscript.find({ journal: req.access })
+        : await Manuscript.find();
+
+    console.log(req.role);
+    console.log(req.access);
     if (!manuscripts || manuscripts.length === 0) {
       return res
         .status(404)
@@ -178,6 +190,26 @@ const editManuscript = async (req, res) => {
     console.log(err);
   }
 };
+const editManuscriptFile = async (req, res) => {
+  const { id } = req.params;
+  if (!id) res.status(400).json({ error: "ID is not defined" });
+  const { file } = req.body;
+
+  try {
+    const manuscript = await Manuscript.findById(id);
+    if (req.role === "editor" && manuscript.journal !== req.access)
+      res
+        .status(401)
+        .json({ error: "Not allowed to access this edit this journal" });
+    if (!manuscript)
+      return res.status(404).json({ error: "Manuscript not found" });
+    manuscript.file = file;
+    const result = await manuscript.save();
+    res.json(result);
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 const deleteManuscript = async (req, res) => {
   const { token } = req.params;
@@ -201,7 +233,12 @@ const deleteManuscriptByAdmin = async (req, res) => {
 
   if (!id) res.status(400).json({ error: "Id is not defined" });
   try {
-    const result = await Manuscript.findByIdAndDelete(id);
+    const manuscript = await Manuscript.findById(id);
+    if (req.role === "editor" && manuscript.journal !== req.access)
+      res
+        .status(401)
+        .json({ error: "Not allowed to access this delete this journal" });
+    const result = manuscript.deleteOne();
     if (!result)
       return res.status(404).json({ error: "Could not find manuscript" });
     res.json(result);
@@ -215,17 +252,15 @@ const approveManuscript = async (req, res) => {
 
   try {
     const manuscript = await Manuscript.findById(id);
+    if (req.role === "editor" && manuscript.journal !== req.access)
+      res.status(401).json({ error: "Not allowed to access this journal" });
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
 
-    // Update status to "approved"
     manuscript.status = "approved";
     await manuscript.save();
-
-    // Construct Payment Link (e.g. /pay/:id on frontend)
     const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
 
-    // Send Email
     await sendMail({
       to: manuscript.email,
       subject: "Your Manuscript Has Been Approved – Complete Payment",
@@ -255,6 +290,16 @@ const approveManuscript = async (req, res) => {
   }
 };
 
+const handleManuscriptPaid = async (req, res) => {
+  const { id } = req.params;
+  const manuscript = await Manuscript.findById(id);
+  if (!manuscript)
+    return res.status(404).json({ error: "Manuscript not found" });
+
+  manuscript.status = "paid";
+  const result = await manuscript.save();
+  res.json(result);
+};
 const rejectManuscript = async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
@@ -360,8 +405,11 @@ const sendReminderEmail = async (req, res) => {
 };
 
 module.exports = {
+  getUserManuscript,
   addManuscript,
+  handleManuscriptPaid,
   editManuscript,
+  editManuscriptFile,
   deleteManuscript,
   getManuscript,
   getAllManuscripts,

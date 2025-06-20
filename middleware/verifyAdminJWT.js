@@ -10,6 +10,7 @@ const verifyAdminJWT = async (req, res, next) => {
     req.userId = decoded.userData.id;
     console.log(req.userId);
     req.role = decoded.userData.role;
+    if (req.role === "editor") req.access = decoded.userData.access;
     next();
   } catch (error) {
     console.log(error);

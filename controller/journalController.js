@@ -8,14 +8,14 @@ const getCurrentIssue = async (req, res) => {
   const issue = Number(journal[0].issue);
   res.json({ issue });
 };
+
 const changeCurrentIssue = async (req, res) => {
   const { name } = req.params;
-  const { issue } = req.body;
   const journal = await Journal.find({ name });
   if (!journal) return res.status(404).json({ error: "Invalid journal name" });
-  journal.issue = Number(issue);
-  const result = journal.save();
-  res.json({ result });
+  journal.issue++;
+  const result = await journal.save();
+  res.json(result);
 };
 
 module.exports = { getCurrentIssue, changeCurrentIssue };

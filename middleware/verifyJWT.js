@@ -6,7 +6,7 @@ const verifyJWT = async (req, res, next) => {
       console.log("No token");
       return res.sendStatus(401);
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userData.id;
     next();
   } catch (error) {

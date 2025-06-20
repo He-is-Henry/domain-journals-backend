@@ -14,7 +14,12 @@ const storage = new CloudinaryStorage({
         req.body.extension || file.originalname.split(".").pop();
       console.log("From cloudinary settings", file);
       const originalName = file.originalname.split(".")[0];
-      return `${originalName}_${timestamp}.${originalExt}`;
+      console.log(originalExt);
+      const name = `${originalName}_${timestamp}${
+        originalExt !== "pdf" ? "." + originalExt : ""
+      }`;
+      console.log(name);
+      return name;
     },
   },
 });

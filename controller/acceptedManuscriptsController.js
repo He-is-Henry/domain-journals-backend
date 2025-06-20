@@ -2,6 +2,10 @@ const { Accepted } = require("../model/AcceptedManuscripts");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
+const getUserManuscript = async (req, res) => {
+  const manuscripts = await Accepted.find({ authorId: req.userId });
+  res.json(manuscripts);
+};
 const getByIssue = async (req, res) => {
   const { name, issue } = req.params;
   console.log(name, issue);
@@ -27,6 +31,7 @@ const publishManuscript = async (req, res) => {
       return res.status(404).json({ error: "Manuscript not found" });
 
     const accepted = new Accepted({
+      authorId: manuscript.authorId,
       name: manuscript.name,
       email: manuscript.email,
       title: manuscript.title,
@@ -68,4 +73,9 @@ const publishManuscript = async (req, res) => {
     res.status(500).json({ error: "Failed to publish manuscript" });
   }
 };
-module.exports = { getByIssue, getArchive, publishManuscript };
+module.exports = {
+  getByIssue,
+  getArchive,
+  publishManuscript,
+  getUserManuscript,
+};

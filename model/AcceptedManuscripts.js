@@ -14,6 +14,6 @@ const manuscriptSchema = new Schema({
 });
 
 module.exports.Accepted = mongoose.model(
-  "acceptedManuscript",
+  "AcceptedManuscript",
   manuscriptSchema
 );
