@@ -51,18 +51,27 @@ const publishManuscript = async (req, res) => {
       to: manuscript.email,
       subject: `Your manuscript "${manuscript.title}" has been published`,
       html: `
-        <p>Dear ${manuscript.name},</p>
-        <p>We are pleased to inform you that your manuscript titled:</p>
-        <blockquote>${manuscript.title}</blockquote>
-        <p>has been successfully <strong>published</strong> in the journal <strong>${accepted.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
-        <p>View your manuscript here: 
-          <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
-            ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
-          </a>
-        </p>
-        <br />
-        <p>Regards,<br />Editorial Board</p>
-      `,
+  <p>Dear ${manuscript.name},</p>
+  <p>We are pleased to inform you that your manuscript titled:</p>
+  <blockquote>${manuscript.title}</blockquote>
+  <p>has been successfully <strong>published</strong> in the journal <strong>${accepted.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
+
+  <p>You can view your published manuscript here: 
+    <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
+      ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
+    </a>
+  </p>
+
+  <p>We’d love to hear your feedback. Kindly take a moment to share your experience with us by submitting a brief review:</p>
+  <p>
+    <a href="${process.env.FRONTEND_URL}/review" target="_blank" style="color: #2e7d32;">
+      Submit a Review
+    </a>
+  </p>
+
+  <br />
+  <p>Regards,<br />Editorial Board</p>
+`,
     });
 
     res

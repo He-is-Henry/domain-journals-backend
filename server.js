@@ -34,6 +34,7 @@ app.use("/accepted", require("./routes/acceptedManuscripts"));
 app.use("/author", require("./routes/author"));
 app.use("/admin", require("./routes/user"));
 app.use("/pay", require("./routes/payment"));
+app.use("/review", require("./routes/review"));
 
 app.all("/*splat", (req, res) => {
   return res.sendFile(filePath);
