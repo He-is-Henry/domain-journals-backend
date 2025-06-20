@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const verifyJWT = async (req, res, next) => {
   try {
     const token = req.cookies?.jwt;
+    console.log(req.cookies);
     if (!token) {
       console.log("No token");
       return res.sendStatus(401);

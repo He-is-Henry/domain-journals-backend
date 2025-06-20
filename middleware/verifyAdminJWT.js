@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const verifyAdminJWT = async (req, res, next) => {
   try {
     const token = req.cookies?.admin;
+    console.log(req.cookies)
     if (!token) {
       console.log("No token");
       return res.status(401).json({ error: "Token not found" });
