@@ -115,7 +115,7 @@ const login = async (req, res) => {
       .cookie("admin", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production" ? true : false,
-        sameSite: "Lax",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         maxAge: 2 * 24 * 60 * 60 * 1000,
       })
       .json({
@@ -286,30 +286,30 @@ const handleResetPassword = async (req, res) => {
     return res.status(400).json({ error: "Missing required field (id)" });
 
   try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "user not found" });
+    const us = await User.findById(userId);
+    if (!us) return res.status(404).json({ error: "us not found" });
 
     if (
-      !user.resetKey ||
-      user.resetKey !== resetKey ||
-      Date.now() > user.resetKeyExpires
+      !us.resetKey ||
+      us.resetKey !== resetKey ||
+      Date.now() > us.resetKeyExpires
     ) {
       return res.status(403).json({ error: "Invalid or expired reset key" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    user.password = hashed;
+    us.password = hashed;
 
-    user.resetKey = undefined;
-    user.resetKeyExpires = undefined;
+    us.resetKey = undefined;
+    us.resetKeyExpires = undefined;
 
-    await user.save();
+    await us.save();
     res
       .clearCookie("jwt", {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 365 * 1000,
         scure: false,
-        sameSite: "Lax",
+        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       })
       .status(200)
       .json({ message: "Password reset successful" });

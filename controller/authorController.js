@@ -20,7 +20,7 @@ const signup = async (req, res) => {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 365 * 1000,
       secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite : "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
     res.status(200).json({ author: { id: author._id, name: author.name } });
   } catch (error) {
@@ -43,7 +43,7 @@ const login = async (req, res) => {
     httpOnly: true,
     maxAge: 60 * 60 * 24 * 365 * 1000,
     secure: process.env.NODE_ENV === "production" ? true : false,
-    sameSite:  "Lax",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
   });
   res.status(200).json({ author });
 };
@@ -82,7 +82,7 @@ const logout = (req, res) => {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 365 * 1000,
       scure: false,
-      sameSite: "Lax",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     })
     .status(204)
     .json({ message: "Logged out" });
