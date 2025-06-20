@@ -115,7 +115,7 @@ const login = async (req, res) => {
       .cookie("admin", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production" ? true : false,
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        sameSite: "Lax",
         maxAge: 2 * 24 * 60 * 60 * 1000,
       })
       .json({
@@ -309,7 +309,7 @@ const handleResetPassword = async (req, res) => {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 365 * 1000,
         scure: false,
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+        sameSite: "Lax",
       })
       .status(200)
       .json({ message: "Password reset successful" });
