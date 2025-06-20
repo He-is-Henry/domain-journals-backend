@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const reviewSchema = Schema({
-  authorId: { type: String },
+  authorId: { type: String, required: true },
   dateTime: { type: Date, default: new Date().toISOString() },
   text: { type: String, required: true },
 });
