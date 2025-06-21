@@ -35,16 +35,16 @@ const replyMessage = async (req, res) => {
     console.log(message);
     await sendMail({
       to: message.email,
-      subject: `Reply to your message ${message.message}`,
+      subject: `RE: ${message.message}`,
       text: `${String(reply).substring(0, 40)}`,
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-        <h2 style="color: #333;">Reply to you message</h2>
         <p>Dear ${name}</p>
-        <p>A reply to your message to <strong>Domain Journals</strong>.</p>
+        <i>${String(message.message).substring(0, 200)}</i>
+     
        <p> ${reply} </p>
        
-      
+         <p>Best Regards, </br> <strong>Domain Journals</strong>.</p>
       </div>
     `,
     });

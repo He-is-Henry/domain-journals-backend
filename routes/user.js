@@ -9,18 +9,17 @@ router
   .post(verifyAdminJWT, verifyRoles("admin"), userController.handleInvite)
   .get(verifyAdminJWT, verifyRoles("admin"), userController.getAllUsers);
 
-  router.post('/reset', userController.sendResetKey);
-  router.post('/verify', userController.verifyResetKey)
-  router.post('/resetPW', userController.handleResetPassword)
+router.post("/reset", userController.sendResetKey);
+router.post("/verify", userController.verifyResetKey);
+router.post("/resetPW", userController.handleResetPassword);
 router
   .route("/userId")
   .get(verifyAdminJWT, verifyRoles("admin"), userController.getUser)
   .patch(verifyAdminJWT, verifyRoles("admin"), userController.changeRole);
 router.patch("/complete/:token", userController.completeInvite);
 router.post("/login", userController.login);
+router.post("/logout", userController.logout);
 router.get("/me", verifyAdminJWT, userController.getCurrentUser);
 router.patch("/avatar", verifyAdminJWT, userController.updateAvatar);
-
-module.exports = router;
 
 module.exports = router;

@@ -318,7 +318,20 @@ const handleResetPassword = async (req, res) => {
     res.status(500).json({ error: "Could not reset password" });
   }
 };
+const logout = (req, res) => {
+  res
+    .clearCookie("admin", {
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 365 * 1000,
+      scure: false,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    })
+    .status(204)
+    .json({ message: "Logged out" });
+};
+
 module.exports = {
+  logout,
   sendResetKey,
   verifyResetKey,
   handleResetPassword,
