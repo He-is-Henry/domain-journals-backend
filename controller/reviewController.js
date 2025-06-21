@@ -1,3 +1,4 @@
+const Author = require("../model/Author");
 const { Review } = require("../model/Review");
 
 const addReview = async (req, res) => {
@@ -10,7 +11,17 @@ const addReview = async (req, res) => {
 
 const getAllReviews = async (req, res) => {
   const reviews = await Review.find();
-  res.json(reviews);
+  const reviewDetails = await Promise.all(
+    reviews.map(async (review) => {
+      const author = await Author.findById(review.authorId).select(
+        "name profilePicture"
+      );
+      const name = author.name;
+      const profilePicture = author.profilePicture;
+      return { ...review.toObject(), name, profilePicture };
+    })
+  );
+  res.json(reviewDetails);
 };
 
 module.exports = { addReview, getAllReviews };
