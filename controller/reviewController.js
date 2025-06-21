@@ -8,4 +8,9 @@ const addReview = async (req, res) => {
   res.json(result);
 };
 
-module.exports = { addReview };
+const getAllReviews = async (req, res) => {
+  const reviews = await Review.find();
+  res.json(reviews);
+};
+
+module.exports = { addReview, getAllReviews };

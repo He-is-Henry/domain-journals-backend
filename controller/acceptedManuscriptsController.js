@@ -82,9 +82,21 @@ const publishManuscript = async (req, res) => {
     res.status(500).json({ error: "Failed to publish manuscript" });
   }
 };
+
+const getRecentManuscripts = async (req, res) => {
+  try {
+    const recentManuscripts = await Accepted.find().limit(20);
+    console.log(recentManuscripts);
+    res.json(recentManuscripts);
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
 module.exports = {
   getByIssue,
   getArchive,
   publishManuscript,
   getUserManuscript,
+  getRecentManuscripts,
 };

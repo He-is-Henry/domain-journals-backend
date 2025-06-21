@@ -3,6 +3,9 @@ const router = express.Router();
 const verifyJWT = require("../middleware/verifyJWT");
 const reviewController = require("../controller/reviewController");
 
-router.post("/", verifyJWT, reviewController.addReview);
+router
+  .route("/")
+  .post(verifyJWT, reviewController.addReview)
+  .get(reviewController.getAllReviews);
 
 module.exports = router;
