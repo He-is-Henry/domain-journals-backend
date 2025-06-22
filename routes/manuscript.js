@@ -55,7 +55,7 @@ router.patch(
 );
 
 router.get(
-  "/verify/:paymentReference",
+  "/verify/payment/:paymentReference",
   manuscriptController.getManuscriptByReference
 );
 
