@@ -7,7 +7,7 @@ const payForManuscript = async (req, res) => {
 
   try {
     const manuscript = await Manuscript.findById(id);
-    if (!manuscript) return res.status(404).json({ error: "Not found" });
+    if (!manuscript) return res.status(404).json({ error: "Manuscript found" });
     const isNigerian = manuscript.country?.toLowerCase() === "nigeria";
     if (manuscript.status === "paid") {
       return res
