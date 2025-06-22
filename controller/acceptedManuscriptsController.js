@@ -85,7 +85,7 @@ const publishManuscript = async (req, res) => {
 
 const getRecentManuscripts = async (req, res) => {
   try {
-    const recentManuscripts = await Accepted.find().limit(20);
+    const recentManuscripts = await Accepted.find().limit(3);
     console.log(recentManuscripts);
     res.json(recentManuscripts);
   } catch (error) {
