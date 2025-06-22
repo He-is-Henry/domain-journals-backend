@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail = async ({ to, subject, text, html }) => {
+const sendMail = async ({ to, bcc, subject, text, html }) => {
   try {
     const info = await transporter.sendMail({
       from: `"Domain Journals" <${process.env.EMAIL_USER}>`,
@@ -19,6 +19,7 @@ const sendMail = async ({ to, subject, text, html }) => {
       subject,
       text,
       html,
+      bcc,
     });
     console.log("Email sent:", info.messageId);
     return info;

@@ -36,6 +36,7 @@ app.use("/admin", require("./routes/user"));
 app.use("/pay", require("./routes/payment"));
 app.use("/review", require("./routes/review"));
 app.use("/message", require("./routes/message"));
+app.use("/newsletter", require("./routes/newsletter"));
 
 app.use(errorHandler);
 
