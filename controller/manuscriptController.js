@@ -342,6 +342,7 @@ const rejectManuscript = async (req, res) => {
     res.status(500).json({ error: "Rejection failed." });
   }
 };
+
 const revokeAcceptance = async (req, res) => {
   const { id } = req.params;
 

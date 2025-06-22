@@ -7,7 +7,8 @@ const verifyRoles = require("../middleware/verifyRoles");
 router
   .route("/")
   .post(verifyAdminJWT, verifyRoles("admin"), userController.handleInvite)
-  .get(verifyAdminJWT, verifyRoles("admin"), userController.getAllUsers);
+  .get(verifyAdminJWT, verifyRoles("admin"), userController.getAllUsers)
+  .patch(verifyAdminJWT, userController.changeName);
 
 router.post("/reset", userController.sendResetKey);
 router.post("/verify", userController.verifyResetKey);

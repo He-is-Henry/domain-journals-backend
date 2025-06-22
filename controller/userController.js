@@ -180,6 +180,16 @@ const getUser = async (req, res) => {
   const user = await User.findById(userId).select("-password");
   res.status(200).json(user);
 };
+
+const changeName = async (req, res) => {
+  const { name } = req.body;
+  const id = req.userId;
+  const user = await User.findById(id);
+  user.name = name;
+  console.log(user);
+  const result = await user.save();
+  res.json(result);
+};
 const changeRole = async (req, res) => {
   const { userId } = req.params;
   const { role, access } = req.role;
@@ -270,7 +280,7 @@ const verifyResetKey = async (req, res) => {
       return res.status(410).json({ error: "Reset key has expired" });
     }
     user.resetKeyVerified = true;
-    user.save();
+    await user.save();
 
     res.status(200).json({ message: "Reset key verified" });
   } catch (err) {
@@ -343,4 +353,5 @@ module.exports = {
   getCurrentUser,
   updateAvatar,
   getAllUsers,
+  changeName,
 };

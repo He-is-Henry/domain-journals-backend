@@ -217,6 +217,15 @@ const getCurrentUser = async (req, res) => {
   res.status(200).json(author);
 };
 
+const changeName = async (req, res) => {
+  const { name } = req.body;
+  const id = req.userId;
+  const author = await Author.findById(id);
+  author.name = name;
+  const result = await author.save();
+  res.json(result);
+};
+
 module.exports = {
   signup,
   login,
@@ -226,4 +235,5 @@ module.exports = {
   handleResetMail,
   handleVerifyKey,
   handleResetPassword,
+  changeName,
 };
