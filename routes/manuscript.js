@@ -48,11 +48,6 @@ router.patch(
   verifyAdminJWT,
   manuscriptController.rejectManuscript
 );
-router.patch(
-  "/:id/publish",
-  verifyAdminJWT,
-  manuscriptController.rejectManuscript
-);
 
 router.get(
   "/verify/payment/:paymentReference",

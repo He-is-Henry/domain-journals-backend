@@ -230,17 +230,19 @@ const deleteManuscript = async (req, res) => {
 };
 const deleteManuscriptByAdmin = async (req, res) => {
   const { id } = req.params;
-
-  if (!id) res.status(400).json({ error: "Id is not defined" });
+  console.log(id);
+  if (!id) return res.status(400).json({ error: "Id is not defined" });
   try {
     const manuscript = await Manuscript.findById(id);
+    if (!manuscript)
+      return res.status(404).json({ error: "Could not find manuscript" });
+    console.log(manuscript);
     if (req.role === "editor" && manuscript.journal !== req.access)
-      res
+      return res
         .status(401)
         .json({ error: "Not allowed to access this delete this journal" });
-    const result = manuscript.deleteOne();
-    if (!result)
-      return res.status(404).json({ error: "Could not find manuscript" });
+    const result = await manuscript.deleteOne();
+
     res.json(result);
   } catch (error) {
     console.log(error);
