@@ -1,3 +1,31 @@
+const axios = require("axios");
+const path = require("path");
+
+const downloadFile = async (req, res) => {
+  const fileId = req.query.url;
+
+  if (!fileId || !fileId.startsWith("https://res.cloudinary.com")) {
+    return res.status(400).json({ error: "Invalid or missing file URL." });
+  }
+  const rawFilename = path.basename(fileId);
+
+  try {
+    const response = await axios.get(fileId, {
+      responseType: "arraybuffer",
+    });
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${rawFilename}.pdf"`,
+    });
+
+    return res.send(response.data);
+  } catch (err) {
+    console.error("Download error:", err.message);
+    return res.status(500).json({ error: "Failed to download file." });
+  }
+};
+
 const uploadFile = (req, res) => {
   try {
     console.log("Trying to upload file");
@@ -32,4 +60,5 @@ const uploadAvatar = (req, res) => {
 module.exports = {
   uploadFile,
   uploadAvatar,
+  downloadFile,
 };

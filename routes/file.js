@@ -5,7 +5,11 @@ const fileController = require("../controller/fileController");
 const verifyJWT = require("../middleware/verifyJWT");
 const verifyAdminJWT = require("../middleware/verifyAdminJWT");
 
-router.post("/", upload.single("file"), fileController.uploadFile);
+router
+  .route("/")
+  .post(upload.single("file"), fileController.uploadFile)
+  .get(fileController.downloadFile);
+
 router.post(
   "/avatar",
   verifyJWT,
