@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3500;
 const path = require("path");
 const corsOptions = require("./config/corsOptions");
 const filePath = path.resolve(__dirname, "view", "404.html");
+const indexPath = path.resolve(__dirname, "view", "index.html");
 
 connectDB();
 app.use("/pay/webhook", express.raw({ type: "application/json" }));
@@ -24,7 +25,7 @@ app.use(cors(corsOptions));
 app.use(logEvents);
 
 app.get("/", (req, res) => {
-  return res.send("Hello");
+  return res.sendFile(indexPath);
 });
 
 app.use("/file", require("./routes/file"));
