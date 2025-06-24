@@ -10,7 +10,7 @@ const connectDB = require("./config/db");
 const PORT = process.env.PORT || 3500;
 const path = require("path");
 const corsOptions = require("./config/corsOptions");
-const filePath = path.resolve(__dirname, "view", "index.html");
+const filePath = path.resolve(__dirname, "view", "404.html");
 
 connectDB();
 app.use("/pay/webhook", express.raw({ type: "application/json" }));
