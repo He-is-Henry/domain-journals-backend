@@ -8,6 +8,8 @@ router
   .route("/")
   .post(verifyAdminJWT, acceptedManuscriptController.publishManuscript)
   .get(verifyJWT, acceptedManuscriptController.getUserManuscript);
+
+router.get("/:id", acceptedManuscriptController.getManuscript);
 router.get("/:name/:issue", acceptedManuscriptController.getByIssue);
 router.get("/recent", acceptedManuscriptController.getRecentManuscripts);
 router.route("/:name").get(acceptedManuscriptController.getArchive);

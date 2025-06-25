@@ -17,6 +17,13 @@ const getByIssue = async (req, res) => {
   res.json(currentIssue);
 };
 
+const getManuscript = async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "Id is required" });
+  const manuscript = await Accepted.findById(id);
+  if (!manuscript) return res.json(404).json({ error: "Manuscript not found" });
+  res.json(manuscript);
+};
 const getArchive = async (req, res) => {
   const { name } = req.params;
   const archive = await Accepted.find({ journal: name });
@@ -99,4 +106,5 @@ module.exports = {
   publishManuscript,
   getUserManuscript,
   getRecentManuscripts,
+  getManuscript,
 };
