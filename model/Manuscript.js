@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const manuscriptSchema = new Schema({
-  name: { type: String, required: true },
+  author: { type: String, required: true },
+  coAuthors: [
+    {
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+    },
+  ],
   authorId: String,
   email: { type: String, required: true },
   title: { type: String, required: true },
@@ -13,8 +19,8 @@ const manuscriptSchema = new Schema({
   volume: { type: Number, default: 2026 - new Date().getFullYear() },
   status: {
     type: String,
-    enum: ["under-review", "approved", "paid", "rejected"],
-    default: "under-review",
+    enum: ["screening", "under-review", "approved", "paid", "rejected"],
+    default: "screening",
     required: true,
   },
   comment: String,

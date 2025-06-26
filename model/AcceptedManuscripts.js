@@ -2,7 +2,13 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const manuscriptSchema = new Schema({
-  name: { type: String, required: true },
+  author: { type: String, required: true },
+  coAuthors: [
+    {
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+    },
+  ],
   authorId: { type: String, required: true },
   email: { type: String, required: true },
   title: { type: String, required: true },
@@ -12,6 +18,7 @@ const manuscriptSchema = new Schema({
   country: { type: String, required: true },
   volume: { type: Number, default: 2026 - new Date().getFullYear() },
   issue: { type: Number, required: true },
+  paymentReference: String,
 });
 
 module.exports.Accepted = mongoose.model(

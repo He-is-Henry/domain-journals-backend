@@ -30,7 +30,7 @@ const payForManuscript = async (req, res) => {
 
         metadata: {
           manuscriptId: id,
-          name: manuscript.name,
+          name: manuscript.author,
           journal: manuscript.journal,
         },
         callback_url: `${process.env.FRONTEND_URL}/payment-success`,
@@ -72,7 +72,7 @@ const confirmPayment = async (req, res) => {
     const data = event.data;
 
     const manuscriptId = data.metadata?.manuscriptId;
-    const name = data.metadata?.name;
+    const name = data.metadata?.author;
     const email = data.customer?.email;
 
     if (manuscriptId) {

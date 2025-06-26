@@ -16,6 +16,7 @@ const addManuscript = async (req, res) => {
     return res.status(400).json({ error: "A manuscript is required" });
   }
   manuscript.authorId = req.userId;
+  const coAuthors = manuscript.coAuthors.map((c) => c.email);
 
   try {
     const result = await Manuscript.create(manuscript);
@@ -30,7 +31,7 @@ const addManuscript = async (req, res) => {
   <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
     <h2 style="color: #4CAF50;">📄 Manuscript Submission Received</h2>
 
-    <p>Hi <strong>${manuscript.name}</strong>,</p>
+    <p>Hi <strong>${manuscript.author}</strong>,</p>
 
     <p>
       Your manuscript titled "<em>${manuscript.title}</em>" submitted to 
@@ -67,6 +68,7 @@ const addManuscript = async (req, res) => {
 
     await sendMail({
       to: manuscript.email,
+      cc: coAuthors,
       subject: "✅ Manuscript Submission Received",
       text: `Your manuscript titled ${manuscript.title} has been received`,
       html,
@@ -100,7 +102,10 @@ const getAllManuscripts = async (req, res) => {
   try {
     const manuscripts =
       req.role === "editor"
-        ? await Manuscript.find({ journal: req.access })
+        ? await Manuscript.find({
+            journal: req.access,
+            status: { $ne: "screening" },
+          })
         : await Manuscript.find();
 
     console.log(req.role);
@@ -249,27 +254,47 @@ const deleteManuscriptByAdmin = async (req, res) => {
   }
 };
 
+const handleManuscriptScreened = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const manuscript = await Manuscript.findById(id);
+
+    if (!manuscript)
+      return res.status(404).json({ error: "Manuscript not found" });
+    if (req.role !== "admin")
+      return res.status(401).json({ error: "Not allowed to screen a journal" });
+    manuscript.status = "under-review";
+    const result = manuscript.save();
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Screening failed" });
+  }
+};
 const approveManuscript = async (req, res) => {
   const { id } = req.params;
 
   try {
     const manuscript = await Manuscript.findById(id);
-    if (req.role === "editor" && manuscript.journal !== req.access)
-      res.status(401).json({ error: "Not allowed to access this journal" });
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
+    if (req.role === "editor" && manuscript.journal !== req.access)
+      res.status(401).json({ error: "Not allowed to access this journal" });
 
     manuscript.status = "approved";
     await manuscript.save();
     const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
+    const coAuthors = manuscript.coAuthors.map((m) => m.email);
 
     await sendMail({
       to: manuscript.email,
+      cc: coAuthors,
       subject: "Your Manuscript Has Been Approved – Complete Payment",
-      text: `Hi ${manuscript.name}, your manuscript has been approved. Please pay using the link: ${paymentLink}`,
+      text: `Hi ${manuscript.author}, your manuscript has been approved. Please pay using the link: ${paymentLink}`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <p>Hi <strong>${manuscript.name}</strong>,</p>
+          <p>Hi <strong>${manuscript.author}</strong>,</p>
           <p>Your manuscript titled "<em>${manuscript.title}</em>" has been <strong>approved</strong> for publication.</p>
           <p>Please complete your publication fee payment to proceed.</p>
           <div style="margin-top: 20px;">
@@ -310,6 +335,7 @@ const rejectManuscript = async (req, res) => {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
+    const coAuthors = manuscript.coAuthors.map((m) => m.email);
 
     manuscript.status = "rejected";
     manuscript.comment = comment || "No reason provided";
@@ -320,10 +346,11 @@ const rejectManuscript = async (req, res) => {
     await sendMail({
       to: manuscript.email,
       subject: "Manuscript Submission – Decision Notification",
-      text: `Hi ${manuscript.name}, unfortunately, your manuscript "${manuscript.title}" was not accepted for publication. Reason: ${comment}`,
+      cc: coAuthors,
+      text: `Hi ${manuscript.author}, unfortunately, your manuscript "${manuscript.title}" was not accepted for publication. Reason: ${comment}`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <p>Dear <strong>${manuscript.name}</strong>,</p>
+          <p>Dear <strong>${manuscript.author}</strong>,</p>
           <p>Thank you for submitting your manuscript titled "<em>${
             manuscript.title
           }</em>" to <strong>${manuscript.journal}</strong>.</p>
@@ -350,6 +377,8 @@ const revokeAcceptance = async (req, res) => {
 
   try {
     const manuscript = await Manuscript.findById(id);
+    if (manuscript.status === "paid")
+      return res.json({ error: "You cannot revert a paid manuscript" });
     if (!manuscript) return res.status(404).json({ message: "Not found" });
 
     manuscript.status = "under-review";
@@ -377,14 +406,16 @@ const sendReminderEmail = async (req, res) => {
     }
 
     const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
+    const coAuthors = manuscript.coAuthors.map((m) => m.email);
 
     await sendMail({
       to: manuscript.email,
+      cc: coAuthors,
       subject: "Reminder: Complete Your Manuscript Payment",
-      text: `Hi ${manuscript.name}, this is a reminder to complete payment for your approved manuscript. Use the link: ${paymentLink}`,
+      text: `Hi ${manuscript.author}, this is a reminder to complete payment for your approved manuscript. Use the link: ${paymentLink}`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-          <p>Hi <strong>${manuscript.name}</strong>,</p>
+          <p>Hi <strong>${manuscript.author}</strong>,</p>
           <p>This is a friendly reminder to complete the payment for your manuscript titled "<em>${manuscript.title}</em>", which has already been <strong>approved</strong>.</p>
           <p>Please use the button below to make your payment:</p>
           <div style="margin-top: 20px;">

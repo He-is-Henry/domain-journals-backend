@@ -45,20 +45,19 @@ const sendNewsletter = async (req, res) => {
   }
 
   try {
-    const subscribers = await Newsletter.find({}, "email"); // only get emails
+    const subscribers = await Newsletter.find({}, "email");
 
     if (subscribers.length === 0) {
       return res.status(404).json({ error: "No subscribers found." });
     }
 
-    // Optional: send as BCC in one mail
     const bccList = subscribers.map((s) => s.email);
 
     await sendMail({
-      to: "noreply@yourdomain.com", // or leave as admin
+      to: "noreply@yourdomain.com",
       bcc: bccList,
       subject,
-      html: `<p>${body.replace(/\n/g, "<br>")}</p>`, // basic formatting
+      html: `<p>${body.replace(/\n/g, "<br>")}</p>`,
     });
 
     res.status(200).json({ message: "Newsletter sent." });

@@ -38,8 +38,9 @@ const publishManuscript = async (req, res) => {
       return res.status(404).json({ error: "Manuscript not found" });
 
     const accepted = new Accepted({
+      coAuthors: manuscript.coAuthors,
       authorId: manuscript.authorId,
-      name: manuscript.name,
+      author: manuscript.author,
       email: manuscript.email,
       title: manuscript.title,
       journal,
@@ -47,18 +48,20 @@ const publishManuscript = async (req, res) => {
       file: manuscript.file,
       country: manuscript.country,
       volume: manuscript.volume,
+      paymentReference: manuscript.paymentReference,
       issue,
     });
 
     await accepted.save();
 
     await manuscript.deleteOne();
-
+    const coAuthors = manuscript.coAuthors.map((c) => c.email);
     await sendMail({
       to: manuscript.email,
       subject: `Your manuscript "${manuscript.title}" has been published`,
+      cc: coAuthors,
       html: `
-  <p>Dear ${manuscript.name},</p>
+  <p>Dear ${manuscript.author},</p>
   <p>We are pleased to inform you that your manuscript titled:</p>
   <blockquote>${manuscript.title}</blockquote>
   <p>has been successfully <strong>published</strong> in the journal <strong>${accepted.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
