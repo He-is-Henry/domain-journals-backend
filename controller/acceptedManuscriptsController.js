@@ -37,7 +37,8 @@ const publishManuscript = async (req, res) => {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
-
+    if (!manuscript.edited)
+      return res.josn({ error: "Manuscript needs re-upload before " });
     const accepted = new Accepted({
       coAuthors: manuscript.coAuthors,
       authorId: manuscript.authorId,
