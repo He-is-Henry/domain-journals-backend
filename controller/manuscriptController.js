@@ -211,6 +211,7 @@ const editManuscriptFile = async (req, res) => {
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
     manuscript.file = file;
+    manuscript.edited = true;
     const result = await manuscript.save();
     res.json(result);
   } catch (err) {

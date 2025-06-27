@@ -10,6 +10,7 @@ const manuscriptSchema = new Schema({
     },
   ],
   authorId: String,
+  edited: { type: Boolean, required: true, default: false },
   email: { type: String, required: true },
   title: { type: String, required: true },
   journal: { type: String, required: true },
