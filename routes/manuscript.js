@@ -17,6 +17,12 @@ router
   .patch(manuscriptController.editManuscript)
   .delete(manuscriptController.deleteManuscript);
 
+router.patch(
+  "/screen/:id",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  manuscriptController.handleManuscriptScreened
+);
 router
   .route("/admin/:id")
   .delete(verifyAdminJWT, manuscriptController.deleteManuscriptByAdmin)

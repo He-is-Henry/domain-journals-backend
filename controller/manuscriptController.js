@@ -21,58 +21,65 @@ const addManuscript = async (req, res) => {
   try {
     const result = await Manuscript.create(manuscript);
     console.log(result._id);
-    res.json(result);
 
     const token = jwt.sign({ id: result._id }, process.env.JWT_SECRET, {
       expiresIn: "12h",
     });
 
-    const html = `
-  <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
-    <h2 style="color: #4CAF50;">📄 Manuscript Submission Received</h2>
+    const generateHtml = (isMainAuthor) => {
+      const ccNotice = isMainAuthor
+        ? ""
+        : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "<strong>${
+            manuscript.author
+          }</strong>" &lt;${manuscript.email}&gt;<br/>
+         CC: ${manuscript.coAuthors
+           .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
+           .join(", ")}
+       </p><br/>`;
 
-    <p>Hi <strong>${manuscript.author}</strong>,</p>
-
-    <p>
-      Your manuscript titled "<em>${manuscript.title}</em>" submitted to 
-      <strong>${manuscript.journal}</strong> has been successfully received.
-    </p>
-
-    <p>We’ll contact you with the outcome or next steps shortly.</p>
-
-    <p>Thank you for submitting to <strong>Domain Journals</strong>.</p>
-
-    <div style="margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px;">
-      <a href="${process.env.FRONTEND_URL}/edit/${token}" 
-         style="background-color: #4CAF50; color: white; padding: 10px 20px; 
-                text-decoration: none; border-radius: 5px; display: inline-block;">
-        ✏️ Edit Manuscript
-      </a>
-
-      <a href="${process.env.FRONTEND_URL}/delete/${token}" 
-         style="background-color: #f44336; color: white; padding: 10px 20px; 
-                text-decoration: none; border-radius: 5px; display: inline-block;">
-        🗑️ Delete Manuscript
-      </a>
-
-      <a href="${process.env.FRONTEND_URL}/status/${result._id}" 
-         style="background-color: #2196F3; color: white; padding: 10px 20px; 
-                text-decoration: none; border-radius: 5px; display: inline-block;">
-        🔍 Check Status
-      </a>
+      return `
+    ${ccNotice}
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+      <h2 style="color: #4CAF50;">📄 Manuscript Submission Received</h2>
+      <p>Hi <strong>${manuscript.author}</strong>,</p>
+      <p>Your manuscript titled "<em>${manuscript.title}</em>" submitted to 
+      <strong>${manuscript.journal}</strong> has been successfully received.</p>
+      <p>We’ll contact you with the outcome or next steps shortly.</p>
+      <p>Thank you for submitting to <strong>Domain Journals</strong>.</p>
+      <div style="margin-top: 30px; display: flex; flex-wrap: wrap; gap: 10px;">
+        <a href="${process.env.FRONTEND_URL}/edit/${token}" 
+           style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+          ✏️ Edit Manuscript
+        </a>
+        <a href="${process.env.FRONTEND_URL}/delete/${token}" 
+           style="background-color: #f44336; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+          🗑️ Delete Manuscript
+        </a>
+        <a href="${process.env.FRONTEND_URL}/status/${result._id}" 
+           style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+          🔍 Check Status
+        </a>
+      </div>
+      <p style="margin-top: 30px;"><strong style="color: red;">⚠️ Do not share this email with anyone!</strong></p>
     </div>
-
-    <p style="margin-top: 30px;"><strong style="color: red;">⚠️ Do not share this email with anyone!</strong></p>
-  </div>
-`;
+  `;
+    };
 
     await sendMail({
       to: manuscript.email,
-      cc: coAuthors,
       subject: "✅ Manuscript Submission Received",
       text: `Your manuscript titled ${manuscript.title} has been received`,
-      html,
+      html: generateHtml(true),
     });
+
+    await sendMail({
+      to: manuscript.email,
+      bcc: coAuthors,
+      subject: "✅ Manuscript Submission Received",
+      html: generateHtml(false),
+    });
+
+    res.json(result);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Failed to submit manuscript" });
@@ -110,18 +117,13 @@ const getAllManuscripts = async (req, res) => {
 
     console.log(req.role);
     console.log(req.access);
-    if (!manuscripts || manuscripts.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No manuscripts found or they have been deleted" });
-    }
 
     const journals = mongoose.connection.db.collection("journals");
 
     const fullManuscriptDetails = await Promise.all(
       manuscripts.map(async (manuscript) => {
         manuscript = manuscript.toObject();
-        manuscript.volume = 2026 - new Date().getFullYear();
+        manuscript.volume = new Date().getFullYear() - 2024;
 
         const journal = await journals.findOne({ name: manuscript.journal });
         manuscript.issue = journal?.issue || null;
@@ -272,6 +274,7 @@ const handleManuscriptScreened = async (req, res) => {
     res.status(500).json({ error: "Screening failed" });
   }
 };
+
 const approveManuscript = async (req, res) => {
   const { id } = req.params;
 
@@ -279,20 +282,31 @@ const approveManuscript = async (req, res) => {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
+
     if (req.role === "editor" && manuscript.journal !== req.access)
-      res.status(401).json({ error: "Not allowed to access this journal" });
+      return res
+        .status(401)
+        .json({ error: "Not allowed to access this journal" });
 
     manuscript.status = "approved";
     await manuscript.save();
-    const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
-    const coAuthors = manuscript.coAuthors.map((m) => m.email);
 
-    await sendMail({
-      to: manuscript.email,
-      cc: coAuthors,
-      subject: "Your Manuscript Has Been Approved – Complete Payment",
-      text: `Hi ${manuscript.author}, your manuscript has been approved. Please pay using the link: ${paymentLink}`,
-      html: `
+    const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
+    const coAuthors = manuscript.coAuthors || [];
+
+    const generateHtml = (isMainAuthor) => {
+      const ccNotice = isMainAuthor
+        ? ""
+        : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "<strong>${
+            manuscript.author
+          }</strong>" &lt;${manuscript.email}&gt;<br/>
+             CC: ${coAuthors
+               .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
+               .join(", ")}
+           </p><br/>`;
+
+      return `
+        ${ccNotice}
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <p>Hi <strong>${manuscript.author}</strong>,</p>
           <p>Your manuscript titled "<em>${manuscript.title}</em>" has been <strong>approved</strong> for publication.</p>
@@ -307,7 +321,22 @@ const approveManuscript = async (req, res) => {
           <p>If you have any questions, feel free to reply to this email.</p>
           <p><strong>Domain Journals</strong></p>
         </div>
-      `,
+      `;
+    };
+
+    // Send to main author
+    await sendMail({
+      to: manuscript.email,
+      subject: "Your Manuscript Has Been Approved – Complete Payment",
+      html: generateHtml(true),
+    });
+
+    // Send to co-authors via BCC
+    await sendMail({
+      to: manuscript.email,
+      bcc: coAuthors.map((c) => c.email),
+      subject: "Your Manuscript Has Been Approved – Complete Payment",
+      html: generateHtml(false),
     });
 
     res.status(200).json({ message: "Manuscript approved and email sent." });
@@ -335,7 +364,8 @@ const rejectManuscript = async (req, res) => {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
-    const coAuthors = manuscript.coAuthors.map((m) => m.email);
+
+    const coAuthors = manuscript.coAuthors || [];
 
     manuscript.status = "rejected";
     manuscript.comment = comment || "No reason provided";
@@ -343,12 +373,19 @@ const rejectManuscript = async (req, res) => {
     manuscript.rejectedBy = admin;
     await manuscript.save();
 
-    await sendMail({
-      to: manuscript.email,
-      subject: "Manuscript Submission – Decision Notification",
-      cc: coAuthors,
-      text: `Hi ${manuscript.author}, unfortunately, your manuscript "${manuscript.title}" was not accepted for publication. Reason: ${comment}`,
-      html: `
+    const generateHtml = (isMainAuthor) => {
+      const ccNotice = isMainAuthor
+        ? ""
+        : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "<strong>${
+            manuscript.author
+          }</strong>" &lt;${manuscript.email}&gt;<br/>
+            CC: ${coAuthors
+              .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
+              .join(", ")}
+           </p><br/>`;
+
+      return `
+        ${ccNotice}
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <p>Dear <strong>${manuscript.author}</strong>,</p>
           <p>Thank you for submitting your manuscript titled "<em>${
@@ -362,7 +399,22 @@ const rejectManuscript = async (req, res) => {
           <p>Please don't be discouraged — we appreciate the time and effort you've invested, and we hope you'll consider submitting future work to us.</p>
           <p>Sincerely,<br/>The Editorial Team<br/><strong>Domain Journals</strong></p>
         </div>
-      `,
+      `;
+    };
+
+    // Send to main author
+    await sendMail({
+      to: manuscript.email,
+      subject: "Manuscript Submission – Decision Notification",
+      html: generateHtml(true),
+    });
+
+    // Send to co-authors via BCC with notice
+    await sendMail({
+      to: manuscript.email,
+      bcc: coAuthors.map((c) => c.email),
+      subject: "Manuscript Submission – Decision Notification",
+      html: generateHtml(false),
     });
 
     res.status(200).json({ message: "Manuscript rejected and email sent." });
@@ -400,20 +452,27 @@ const sendReminderEmail = async (req, res) => {
       return res.status(404).json({ error: "Manuscript not found" });
 
     if (manuscript.status !== "approved") {
-      return res
-        .status(400)
-        .json({ error: "Only approved manuscripts can receive reminders." });
+      return res.status(400).json({
+        error: "Only approved manuscripts can receive reminders.",
+      });
     }
 
     const paymentLink = `${process.env.FRONTEND_URL}/pay/${manuscript._id}`;
-    const coAuthors = manuscript.coAuthors.map((m) => m.email);
+    const coAuthors = manuscript.coAuthors || [];
 
-    await sendMail({
-      to: manuscript.email,
-      cc: coAuthors,
-      subject: "Reminder: Complete Your Manuscript Payment",
-      text: `Hi ${manuscript.author}, this is a reminder to complete payment for your approved manuscript. Use the link: ${paymentLink}`,
-      html: `
+    const generateHtml = (isMainAuthor) => {
+      const ccNotice = isMainAuthor
+        ? ""
+        : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "<strong>${
+            manuscript.author
+          }</strong>" &lt;${manuscript.email}&gt;<br/>
+             CC: ${coAuthors
+               .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
+               .join(", ")}
+           </p><br/>`;
+
+      return `
+        ${ccNotice}
         <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
           <p>Hi <strong>${manuscript.author}</strong>,</p>
           <p>This is a friendly reminder to complete the payment for your manuscript titled "<em>${manuscript.title}</em>", which has already been <strong>approved</strong>.</p>
@@ -428,7 +487,22 @@ const sendReminderEmail = async (req, res) => {
           <p>If you’ve already paid, please ignore this message or reply with proof of payment.</p>
           <p><strong>Domain Journals Team</strong></p>
         </div>
-      `,
+      `;
+    };
+
+    // Send to main author
+    await sendMail({
+      to: manuscript.email,
+      subject: "Reminder: Complete Your Manuscript Payment",
+      html: generateHtml(true),
+    });
+
+    // Send to co-authors with CC notice
+    await sendMail({
+      to: manuscript.email,
+      bcc: coAuthors.map((c) => c.email),
+      subject: "Reminder: Complete Your Manuscript Payment",
+      html: generateHtml(false),
     });
 
     res.status(200).json({ message: "Reminder email sent." });
@@ -454,4 +528,5 @@ module.exports = {
   sendReminderEmail,
   getManuscriptByToken,
   deleteManuscriptByAdmin,
+  handleManuscriptScreened,
 };

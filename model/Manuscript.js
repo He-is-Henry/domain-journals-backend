@@ -16,7 +16,7 @@ const manuscriptSchema = new Schema({
   abstract: { type: String, required: true },
   file: { type: String, required: true },
   country: { type: String, required: true },
-  volume: { type: Number, default: 2026 - new Date().getFullYear() },
+  volume: { type: Number, default: new Date().getFullYear() - 2024 },
   status: {
     type: String,
     enum: ["screening", "under-review", "approved", "paid", "rejected"],
