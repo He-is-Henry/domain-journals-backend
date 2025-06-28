@@ -38,7 +38,9 @@ const publishManuscript = async (req, res) => {
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
     if (!manuscript.edited)
-      return res.josn({ error: "Manuscript needs re-upload before " });
+      return res
+        .status(409)
+        .json({ error: "Manuscript needs re-upload before publish" });
     const accepted = new Accepted({
       coAuthors: manuscript.coAuthors,
       authorId: manuscript.authorId,
@@ -51,6 +53,7 @@ const publishManuscript = async (req, res) => {
       country: manuscript.country,
       volume: manuscript.volume,
       paymentReference: manuscript.paymentReference,
+      articleType: manuscript.articleType,
       issue,
     });
 
@@ -118,9 +121,13 @@ const publishManuscript = async (req, res) => {
 };
 
 const getRecentManuscripts = async (req, res) => {
+  const { journal } = req.query;
   try {
-    const recentManuscripts = await Accepted.find().sort({ _id: -1 }).limit(3);
-    console.log(recentManuscripts);
+    const query = journal ? { journal } : {};
+    console.log(journal ? { journal } : {});
+    const recentManuscripts = await Accepted.find(query)
+      .sort({ _id: -1 })
+      .limit(3);
     res.json(recentManuscripts);
   } catch (error) {
     res.status(500).json({ error: "Something went wrong" });
