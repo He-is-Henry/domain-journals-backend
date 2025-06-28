@@ -1,4 +1,5 @@
 const { Message } = require("../model/Message");
+const User = require("../model/User");
 const sendMail = require("../uttils/sendMail");
 
 const newMessage = async (req, res) => {
@@ -30,21 +31,25 @@ const getAllMessages = async (req, res) => {
 const replyMessage = async (req, res) => {
   console.log("replying");
   const { name, reply, messageId } = req.body;
+  const user = req.name;
+  const from = `"${user} from Domain Journals" <no-reply@domainjournals.com>`;
   try {
     const message = await Message.findById(messageId);
     console.log(message);
     await sendMail({
+      from,
       to: message.email,
       subject: `RE: ${message.message}`,
       text: `${String(reply).substring(0, 40)}`,
       html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+      <p> ${user} from Domain Journals</p>
         <p>Dear ${name}</p>
-        <i>${String(message.message).substring(0, 200)}</i>
+        <i>"${String(message.message).substring(0, 200)}"</i>
      
-       <p> ${reply} </p>
+       <div> ${reply} </div>
        
-         <p>Best Regards, </br> <strong>Domain Journals</strong>.</p>
+         <p>Best Regards, <br/> <strong>${user}</strong> </br> <strong>Domain Journals</strong>.</p>
       </div>
     `,
     });
@@ -57,4 +62,18 @@ const replyMessage = async (req, res) => {
   }
 };
 
-module.exports = { newMessage, replyMessage, getAllMessages };
+const deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.json({ error: "id is required" });
+    const result = await Message.findByIdAndDelete(id);
+    if (!result) return res.json({ error: "An error occured" });
+
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Deleting failed" });
+  }
+};
+
+module.exports = { newMessage, replyMessage, getAllMessages, deleteMessage };

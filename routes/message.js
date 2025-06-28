@@ -8,5 +8,6 @@ router
   .post(messagecontroller.newMessage)
   .get(verifyAdminJWT, messagecontroller.getAllMessages);
 router.post("/reply", verifyAdminJWT, messagecontroller.replyMessage);
+router.delete("/:id", messagecontroller.deleteMessage);
 
 module.exports = router;

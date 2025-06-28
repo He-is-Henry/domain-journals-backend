@@ -7,6 +7,14 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const handleInvite = async (req, res) => {
   const { email, role, access } = req.body;
+  const allowedAccesses = [
+    "domain-health-journal",
+    "domain-journal-of-science-and-technology",
+    "domain-multidisciplinary-journal",
+    "domain-journal-of-biological-sciences",
+  ];
+  if (!allowedAccesses.find((a) => a === access))
+    return res.status(401).json({ error: "Invalid Access" });
   if (!email) {
     return res.status(400).json({ error: "Email required" });
   }
@@ -176,37 +184,83 @@ const getAllUsers = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
   const user = await User.findById(userId).select("-password");
   res.status(200).json(user);
 };
 
 const changeName = async (req, res) => {
   const { name } = req.body;
-  const id = req.userId;
-  const user = await User.findById(id);
+  const user = req.name;
   user.name = name;
   console.log(user);
   const result = await user.save();
   res.json(result);
 };
 const changeRole = async (req, res) => {
+  const foundingMembers = ["ejumediaonelson@gmail.com", "henries90@gmail.com"];
   const { userId } = req.params;
-  const { role, access } = req.role;
+  const { role, access } = req.body;
   const acceptedRoles = ["editor", "admin"];
   if (!acceptedRoles.includes(role))
     return res.status(409).json({ error: "invalid user role" });
   const user = await User.findById(userId);
+
+  if (foundingMembers.includes(user.email))
+    return res
+      .status(401)
+      .json({ error: "You cannot perform this action on a founding member" });
   if (role === "editor" && !access)
     return res.status(400).json({ error: "Editors need an access field" });
-  if (user.role === role)
-    return res.status(409).json(`User is already an ${role}`);
+  if (user.role === role && user.access === access)
+    return res.status(409).json({
+      error: `User is already an ${role} ${
+        role === "editor" ? `of ${access}` : ""
+      }`,
+    });
+  const oldRole = user.role;
+  const oldAccess = user.access;
+
   user.role = role;
   if (role === "editor") user.access = access;
+  else user.access = undefined;
   const result = await user.save();
+
+  const from = `"${req.name} from Domain Journals" <no-reply@domainjournals.com>`;
+  const to = user.email;
+  const subject = "Your role has been updated";
+
+  let html = `
+  <p>Hello ${user.name || user.email},</p>
+  <p>Your role in the Domain Journals system has been updated by <strong>${
+    req.name
+  }</strong>.</p>
+  <p><strong>Previous Role:</strong> ${oldRole}${
+    oldRole === "editor" ? ` (Access: ${oldAccess})` : ""
+  }</p>
+  <p><strong>New Role:</strong> ${result.role}${
+    role === "editor" ? ` (New Access: ${result.access})` : ""
+  }</p>
+  <p>If you have any questions or believe this was a mistake, please contact the admin team.</p>
+  <p>Thank you.</p>
+`;
+
+  await sendMail({ from, to, subject, html });
   res.json(result);
 };
 
+const deleteUser = async (req, res) => {
+  const foundingMembers = ["ejumediaonelson@gmail.com", "henries90@gmail.com"];
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: "User doesn't exist" });
+  if (foundingMembers.includes(user.email))
+    return res
+      .status(401)
+      .json({ error: "You cannot perform this action on a founding member" });
+  const result = await user.deleteOne();
+  res.json(result);
+};
 const sendResetKey = async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
@@ -296,24 +350,24 @@ const handleResetPassword = async (req, res) => {
     return res.status(400).json({ error: "Missing required field (id)" });
 
   try {
-    const us = await User.findById(userId);
-    if (!us) return res.status(404).json({ error: "us not found" });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "user not found" });
 
     if (
-      !us.resetKey ||
-      us.resetKey !== resetKey ||
-      Date.now() > us.resetKeyExpires
+      !user.resetKey ||
+      user.resetKey !== resetKey ||
+      Date.now() > user.resetKeyExpires
     ) {
       return res.status(403).json({ error: "Invalid or expired reset key" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    us.password = hashed;
+    user.password = hashed;
 
-    us.resetKey = undefined;
-    us.resetKeyExpires = undefined;
+    user.resetKey = undefined;
+    user.resetKeyExpires = undefined;
 
-    await us.save();
+    await user.save();
     res
       .clearCookie("jwt", {
         httpOnly: true,
@@ -350,6 +404,7 @@ module.exports = {
   completeInvite,
   login,
   changeRole,
+  deleteUser,
   getCurrentUser,
   updateAvatar,
   getAllUsers,

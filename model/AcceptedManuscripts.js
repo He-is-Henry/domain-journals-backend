@@ -3,6 +3,7 @@ const Schema = mongoose.Schema;
 
 const manuscriptSchema = new Schema({
   author: { type: String, required: true },
+  customId: { type: String, required: true },
   coAuthors: [
     {
       name: { type: String, required: true },
@@ -12,7 +13,16 @@ const manuscriptSchema = new Schema({
   authorId: { type: String, required: true },
   email: { type: String, required: true },
   title: { type: String, required: true },
-  journal: { type: String, required: true },
+  journal: {
+    type: String,
+    required: true,
+    enum: [
+      "domain-health-journal",
+      "domain-journal-of-science-and-technology",
+      "domain-multidisciplinary-journal",
+      "domain-journal-of-biological-sciences",
+    ],
+  },
   articleType: { type: String, required: true },
   abstract: { type: String, required: true },
   file: { type: String, required: true },

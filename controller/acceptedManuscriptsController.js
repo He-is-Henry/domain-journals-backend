@@ -2,6 +2,46 @@ const { Accepted } = require("../model/AcceptedManuscripts");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
+function getInitials(slug) {
+  return slug
+    .split("-")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+const getManuscriptId = async (journal) => {
+  const currentYear = new Date().getFullYear();
+  const initials = getInitials(journal);
+
+  const latest = await Accepted.findOne({ journal }).sort({ _id: -1 });
+
+  let count = 1;
+
+  if (latest?.customId) {
+    const parts = latest.customId.split("-");
+    if (
+      parts.length === 3 &&
+      parts[0] === initials &&
+      +parts[1] === currentYear
+    ) {
+      count = parseInt(parts[2], 10) + 1;
+    }
+  }
+
+  const padded = count.toString().padStart(3, "0");
+  return `${initials}-${currentYear}-${padded}`;
+};
+const getPublishPreview = async (req, res) => {
+  try {
+    const { journal } = req.params;
+    const id = await getManuscriptId(journal);
+    res.json(id);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to generate custom ID" });
+  }
+};
 const getUserManuscript = async (req, res) => {
   const manuscripts = await Accepted.find({ authorId: req.userId });
   res.json(manuscripts);
@@ -41,8 +81,10 @@ const publishManuscript = async (req, res) => {
       return res
         .status(409)
         .json({ error: "Manuscript needs re-upload before publish" });
+    const customId = await getManuscriptId(manuscript.journal);
     const accepted = new Accepted({
       coAuthors: manuscript.coAuthors,
+      customId,
       authorId: manuscript.authorId,
       author: manuscript.author,
       email: manuscript.email,
@@ -141,4 +183,5 @@ module.exports = {
   getUserManuscript,
   getRecentManuscripts,
   getManuscript,
+  getPublishPreview,
 };

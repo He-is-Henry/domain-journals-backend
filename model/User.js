@@ -39,7 +39,15 @@ const userSchema = new mongoose.Schema(
     resetKeyExpires: {
       type: Date,
     },
-    access: String,
+    access: {
+      type: String,
+      enum: [
+        "domain-health-journal",
+        "domain-journal-of-science-and-technology",
+        "domain-journal-of-biological-sciences",
+        "domain-multidisciplinary-journal",
+      ],
+    },
   },
   {
     timestamps: true,

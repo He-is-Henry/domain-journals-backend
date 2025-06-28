@@ -1,18 +1,31 @@
 const jwt = require("jsonwebtoken");
-const verifyJWT = async (req, res, next) => {
+const Author = require("../model/Author");
+
+const verifyAuthorJWT = async (req, res, next) => {
   try {
-    const token = req.cookies?.jwt;
-    console.log(req.cookies);
+    const token = req.cookies?.author;
+
     if (!token) {
-      console.log("No token");
-      return res.sendStatus(401);
+      return res.status(401).json({ error: "Token not found" });
     }
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userData.id;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.userData.id;
+
+    const author = await Author.findById(userId);
+
+    if (!author) {
+      return res.status(401).json({ error: "Author no longer exists" });
+    }
+
+    req.userId = author._id;
+    req.role = author.role;
+
     next();
   } catch (error) {
-    console.log(error);
+    console.log("JWT verification error:", error);
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
-module.exports = verifyJWT;
+module.exports = verifyAuthorJWT;

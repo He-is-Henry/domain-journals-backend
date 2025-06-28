@@ -1,17 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const acceptedManuscriptController = require("../controller/acceptedManuscriptsController");
+const acceptedManuscriptsController = require("../controller/acceptedManuscriptsController");
 const verifyAdminJWT = require("../middleware/verifyAdminJWT");
 const verifyJWT = require("../middleware/verifyJWT");
+const verifyRoles = require("../middleware/verifyRoles");
 
 router
   .route("/")
-  .post(verifyAdminJWT, acceptedManuscriptController.publishManuscript)
-  .get(verifyJWT, acceptedManuscriptController.getUserManuscript);
-router.get("/recent/", acceptedManuscriptController.getRecentManuscripts);
-router.get("/view/:id", acceptedManuscriptController.getManuscript);
-router.get("/:name/:issue", acceptedManuscriptController.getByIssue);
+  .post(
+    verifyAdminJWT,
+    verifyRoles("admin"),
+    acceptedManuscriptsController.publishManuscript
+  )
+  .get(verifyJWT, acceptedManuscriptsController.getUserManuscript);
+router.get("/recent/", acceptedManuscriptsController.getRecentManuscripts);
+router.get("/new/:journal", acceptedManuscriptsController.getPublishPreview);
+router.get("/view/:id", acceptedManuscriptsController.getManuscript);
+router.get("/:name/:issue", acceptedManuscriptsController.getByIssue);
 
-router.route("/:name").get(acceptedManuscriptController.getArchive);
+router.route("/:name").get(acceptedManuscriptsController.getArchive);
 
 module.exports = router;

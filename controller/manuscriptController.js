@@ -204,6 +204,7 @@ const editManuscriptFile = async (req, res) => {
 
   try {
     const manuscript = await Manuscript.findById(id);
+    console.log(manuscript);
     if (req.role === "editor" && manuscript.journal !== req.access)
       res
         .status(401)
@@ -369,7 +370,7 @@ const rejectManuscript = async (req, res) => {
 
     manuscript.status = "rejected";
     manuscript.comment = comment || "No reason provided";
-    const admin = await User.findById(req.userId);
+    const admin = req.name;
     manuscript.rejectedBy = admin;
     await manuscript.save();
 
@@ -402,14 +403,12 @@ const rejectManuscript = async (req, res) => {
       `;
     };
 
-    // Send to main author
     await sendMail({
       to: manuscript.email,
       subject: "Manuscript Submission – Decision Notification",
       html: generateHtml(true),
     });
 
-    // Send to co-authors via BCC with notice
     await sendMail({
       to: "domainjournals.dev@gmail.com",
       bcc: coAuthors.map((c) => c.email),
