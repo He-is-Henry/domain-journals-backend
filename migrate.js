@@ -1,24 +1,43 @@
-const mongoose = require("mongoose");
 const { Accepted } = require("./model/AcceptedManuscripts");
-const { Manuscript } = require("./model/Manuscript");
 
-const addArticleType = async (collection) => {
-  try {
-    const docs = await collection.find();
+// Helper to get initials from journal slug
+function getInitials(slug) {
+  return slug
+    .split("-")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
 
-    await Promise.all(
-      docs.map(async (doc) => {
-        if (!doc.articleType) {
-          doc.articleType = "Editorial";
-          await doc.save();
-        }
-      })
-    );
+const countMap = {};
 
-    console.log(`Updated ${docs.length} documents in ${collection.modelName}`);
-  } catch (err) {
-    console.error(`Error updating ${collection.modelName}:`, err.message);
+// Main function to generate ID
+function getCustomId(journal) {
+  const year = new Date().getFullYear();
+  const key = `${journal}-${year}`;
+  const initials = getInitials(journal);
+
+  if (!countMap[key]) countMap[key] = 1;
+  else countMap[key] += 1;
+
+  const padded = String(countMap[key]).padStart(3, "0");
+  return `${initials}-${year}-${padded}`;
+}
+
+// Run update script
+async function addMissingCustomIds() {
+  const all = await Accepted.find({});
+
+  for (const doc of all) {
+    if (!doc.customId) {
+      const newId = getCustomId(doc.journal);
+      doc.customId = newId;
+      await doc.save({ validateBeforeSave: false });
+      console.log(`✅ Updated: ${doc._id} → ${newId}`);
+    }
   }
-};
 
-module.exports = { addArticleType };
+  console.log("Done ✅");
+}
+
+module.exports = addMissingCustomIds;

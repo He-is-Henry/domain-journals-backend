@@ -369,7 +369,7 @@ const handleResetPassword = async (req, res) => {
 
     await user.save();
     res
-      .clearCookie("jwt", {
+      .clearCookie("author", {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 365 * 1000,
         scure: false,

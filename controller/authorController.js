@@ -16,7 +16,7 @@ const signup = async (req, res) => {
     const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
       expiresIn: "365d",
     });
-    res.cookie("jwt", token, {
+    res.cookie("author", token, {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 365 * 1000,
       secure: process.env.NODE_ENV === "production" ? true : false,
@@ -39,7 +39,7 @@ const login = async (req, res) => {
   const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
     expiresIn: "365d",
   });
-  res.cookie("jwt", token, {
+  res.cookie("author", token, {
     httpOnly: true,
     maxAge: 60 * 60 * 24 * 365 * 1000,
     secure: process.env.NODE_ENV === "production" ? true : false,
@@ -78,7 +78,7 @@ const updateAvatar = async (req, res) => {
 
 const logout = (req, res) => {
   res
-    .clearCookie("jwt", {
+    .clearCookie("author", {
       httpOnly: true,
       maxAge: 60 * 60 * 24 * 365 * 1000,
       scure: false,
@@ -197,7 +197,7 @@ const handleResetPassword = async (req, res) => {
 
     await author.save();
     res
-      .clearCookie("jwt", {
+      .clearCookie("author", {
         httpOnly: true,
         maxAge: 60 * 60 * 24 * 365 * 1000,
         scure: false,
