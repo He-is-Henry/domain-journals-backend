@@ -73,7 +73,7 @@ const addManuscript = async (req, res) => {
     });
 
     await sendMail({
-      to: "domainjournals.dev@gmail.com",
+      to: "ese.anibor@domainjournals.com",
       bcc: coAuthors,
       subject: "✅ Manuscript Submission Received",
       html: generateHtml(false),
@@ -334,7 +334,7 @@ const approveManuscript = async (req, res) => {
     });
 
     await sendMail({
-      to: "domainjournals.dev@gmail.com",
+      to: "ese.anibor@domainjournals.com",
       bcc: coAuthors.map((c) => c.email),
       subject: "Your Manuscript Has Been Approved – Complete Payment",
       html: generateHtml(false),
@@ -410,7 +410,7 @@ const rejectManuscript = async (req, res) => {
     });
 
     await sendMail({
-      to: "domainjournals.dev@gmail.com",
+      to: "ese.anibor@domainjournals.com",
       bcc: coAuthors.map((c) => c.email),
       subject: "Manuscript Submission – Decision Notification",
       html: generateHtml(false),
@@ -498,7 +498,7 @@ const sendReminderEmail = async (req, res) => {
 
     // Send to co-authors with CC notice
     await sendMail({
-      to: "domainjournals.dev@gmail.com",
+      to: "ese.anibor@domainjournals.com",
       bcc: coAuthors.map((c) => c.email),
       subject: "Reminder: Complete Your Manuscript Payment",
       html: generateHtml(false),

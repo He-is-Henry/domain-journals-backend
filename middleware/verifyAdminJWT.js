@@ -4,6 +4,7 @@ const User = require("../model/User");
 const verifyAdminJWT = async (req, res, next) => {
   try {
     const token = req.cookies?.admin;
+    console.log(token);
 
     if (!token) {
       return res.status(401).json({ error: "Token not found" });

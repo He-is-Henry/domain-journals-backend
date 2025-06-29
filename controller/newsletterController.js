@@ -19,6 +19,8 @@ const subscribe = async (req, res) => {
     const subscription = new Newsletter({ email });
     await subscription.save();
     await sendMail({
+      from: "Domain Journals <updates@domainjournals.com>",
+
       to: email,
       subject: "Thanks for Subscribing!",
       html: `
@@ -54,7 +56,8 @@ const sendNewsletter = async (req, res) => {
     const bccList = subscribers.map((s) => s.email);
 
     await sendMail({
-      to: "noreply@yourdomain.com",
+      from: "Domain Journals <updates@domainjournals.com>",
+      to: "no-reply@domainjournals.com",
       bcc: bccList,
       subject,
       html: `<p>${body.replace(/\n/g, "<br>")}</p>`,

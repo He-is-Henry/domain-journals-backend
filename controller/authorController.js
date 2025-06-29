@@ -103,8 +103,10 @@ const handleResetMail = async (req, res) => {
     author.resetKey = resetKey;
     author.resetKeyExpires = expiry;
     await author.save();
+    const from = `"Domain Journals" <no-reply@domainjournals.com>`;
 
     await sendMail({
+      from,
       to: email,
       subject: "Your Password Reset Code",
       text: `Your password reset code is: ${resetKey}. This code will expire in 24 hours.`,

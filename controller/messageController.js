@@ -32,7 +32,7 @@ const replyMessage = async (req, res) => {
   console.log("replying");
   const { name, reply, messageId } = req.body;
   const user = req.name;
-  const from = `"${user} from Domain Journals" <no-reply@domainjournals.com>`;
+  const from = `"${user} from Domain Journals" <contact@domainjournals.com>`;
   try {
     const message = await Message.findById(messageId);
     console.log(message);

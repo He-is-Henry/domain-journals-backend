@@ -147,7 +147,7 @@ const publishManuscript = async (req, res) => {
     });
 
     await sendMail({
-      to: "domainjournals.dev@gmail.com",
+      to: "ese.anibor.domainjournals.com",
       bcc: coAuthors,
       subject: `Your manuscript "${manuscript.title}" has been published`,
       html: generateHtml(false),
