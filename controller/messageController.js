@@ -49,7 +49,7 @@ const replyMessage = async (req, res) => {
      
        <div> ${reply} </div>
        
-         <p>Best Regards, <br/> <strong>${user}</strong> </br> <strong>Domain Journals</strong>.</p>
+         <div>Best Regards, <br/> <strong>${user}</strong> </br> <strong>Domain Journals</strong>.</div>
       </div>
     `,
     });
