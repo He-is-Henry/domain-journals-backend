@@ -126,6 +126,7 @@ const login = async (req, res) => {
         sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
         maxAge: 2 * 24 * 60 * 60 * 1000,
       })
+
       .json({
         message: "Login successful",
         user: {
@@ -136,6 +137,10 @@ const login = async (req, res) => {
           profilePicture: user.profilePicture,
         },
       });
+    console.log({
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    });
   } catch (err) {
     console.error("Login error:", err.stack);
     res.status(500).json({ error: "Something went wrong" });
