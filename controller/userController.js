@@ -13,7 +13,7 @@ const handleInvite = async (req, res) => {
     "domain-multidisciplinary-journal",
     "domain-journal-of-biological-sciences",
   ];
-  if (!allowedAccesses.find((a) => a === access))
+  if (role === "editor" && !allowedAccesses.find((a) => a === access))
     return res.status(401).json({ error: "Invalid Access" });
   if (!email) {
     return res.status(400).json({ error: "Email required" });
@@ -199,7 +199,11 @@ const changeName = async (req, res) => {
   res.json(result);
 };
 const changeRole = async (req, res) => {
-  const foundingMembers = ["ejumediaonelson@gmail.com", "henries90@gmail.com"];
+  const foundingMembers = [
+    "eseovo2000@yahoo.com",
+    "ejumediaonelson@gmail.com",
+    "henries90@gmail.com",
+  ];
   const { userId } = req.params;
   const { role, access } = req.body;
   const acceptedRoles = ["editor", "admin"];
@@ -251,7 +255,11 @@ const changeRole = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const foundingMembers = ["ejumediaonelson@gmail.com", "henries90@gmail.com"];
+  const foundingMembers = [
+    "eseovo2000@yahoo.com",
+    "ejumediaonelson@gmail.com",
+    "henries90@gmail.com",
+  ];
   const { userId } = req.params;
   const user = await User.findById(userId);
   if (!user) return res.status(404).json({ error: "User doesn't exist" });
