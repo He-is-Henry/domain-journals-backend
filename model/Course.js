@@ -15,5 +15,5 @@ const courseSchema = new schema({
   off: String,
   price: { type: Number, required: [true, "A course price is required"] },
 });
-w;
+
 module.exports = mongoose.model("Course", courseSchema);
