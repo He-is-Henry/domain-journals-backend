@@ -7,4 +7,4 @@ const coursePaymentSchema = new schema({
   confirmed: { type: Boolean, required: true, default: false },
 });
 
-module.exports = mongoose.model("Course", coursePaymentSchema);
+module.exports = mongoose.model("Coursepayment", coursePaymentSchema);
