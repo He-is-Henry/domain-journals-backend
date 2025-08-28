@@ -10,7 +10,7 @@ router.get("/payments", verifyAdminJWT, courseController.getPayments);
 router.delete("/:paymentId", verifyAdminJWT, courseController.deletePayment);
 router.post("/pay/:course", verifyJWT, courseController.handleCoursePayment);
 router.patch("/:paymentId", verifyAdminJWT, courseController.confirmPayment);
-router.put("/courseId", verifyAdminJWT, courseController.editCourse);
+router.put("/:courseId", verifyAdminJWT, courseController.editCourse);
 router.get("/:courseId", courseController.getCourse);
 router.get(
   "/admin/:courseId",
