@@ -140,6 +140,7 @@ const getCourse = async (req, res) => {
       return res.status(400).json({ error: "Course not found, check ID" });
 
     const paid = req.paid;
+    course.paid = paid;
     if (!paid) {
       course.outline = course.outline.map((item) => ({
         ...item,
