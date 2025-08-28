@@ -156,7 +156,7 @@ const getCourse = async (req, res) => {
     res.json(course);
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error", err });
   }
 };
 
