@@ -138,14 +138,25 @@ const getCourse = async (req, res) => {
     const course = await Course.findById(courseId).lean();
     if (!course)
       return res.status(400).json({ error: "Course not found, check ID" });
+
     const paid = req.paid;
-    course.outline = paid
-      ? course.outline
-      : course.outline.map((item) => ({ ...item, file: undefined })) &&
-        course.materials.map((material) => ({ ...material, link: undefined }));
+
+    if (!paid) {
+      course.outline = course.outline.map((item) => ({
+        ...item,
+        file: undefined,
+      }));
+
+      course.materials = course.materials.map((material) => ({
+        ...material,
+        link: undefined,
+      }));
+    }
+
     res.json(course);
   } catch (err) {
     console.log(err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -161,9 +172,11 @@ const determinePaymentStatus = async (course, user) => {
 const getAllCourses = async (req, res) => {
   try {
     const allCourses = await Course.find();
+
     const courses = await Promise.all(
       allCourses.map(async (course) => {
         const paid = await determinePaymentStatus(course._id, req.userId);
+
         return {
           ...course.toObject(),
           paid,
@@ -172,8 +185,10 @@ const getAllCourses = async (req, res) => {
             : course.outline.map((item) => ({
                 title: item.title,
                 file: undefined,
-              })) &&
-              course.materials.map((material) => ({
+              })),
+          materials: paid
+            ? course.materials
+            : course.materials.map((material) => ({
                 ...material,
                 link: undefined,
               })),
@@ -184,6 +199,7 @@ const getAllCourses = async (req, res) => {
     res.json(courses);
   } catch (err) {
     console.log(err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
