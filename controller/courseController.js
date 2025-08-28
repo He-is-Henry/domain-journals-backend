@@ -7,7 +7,8 @@ const addCourse = async (req, res) => {
   try {
     const isAdmin = req.role === "admin";
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
-    const { title, description, outline, price, originalPrice } = req.body;
+    const { title, description, outline, materials, price, originalPrice } =
+      req.body;
     let off;
     if (originalPrice) {
       if (originalPrice < price)
@@ -21,6 +22,7 @@ const addCourse = async (req, res) => {
       title,
       description,
       outline,
+      materials,
       price,
       originalPrice,
       off,
@@ -35,7 +37,8 @@ const editCourse = async (req, res) => {
   try {
     const isAdmin = req.role === "admin";
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
-    const { title, description, outline, price, originalPrice } = req.body;
+    const { title, description, outline, materials, price, originalPrice } =
+      req.body;
     const { courseId } = req.params;
     const course = await Course.findById(courseId);
     let off;
@@ -46,6 +49,7 @@ const editCourse = async (req, res) => {
     if (title) course.title = title;
     if (description) course.description = description;
     if (outline) course.outline = outline;
+    if (materials) course.materials = materials;
     if (price) course.price = price;
     if (originalPrice) course.originalPrice = originalPrice;
     if (originalPrice) course.off = off;
@@ -137,7 +141,8 @@ const getCourse = async (req, res) => {
     const paid = req.paid;
     course.outline = paid
       ? course.outline
-      : course.outline.map((item) => ({ ...item, file: undefined }));
+      : course.outline.map((item) => ({ ...item, file: undefined })) &&
+        course.materials.map((material) => ({ ...material, link: undefined }));
     res.json(course);
   } catch (err) {
     console.log(err);
@@ -167,6 +172,10 @@ const getAllCourses = async (req, res) => {
             : course.outline.map((item) => ({
                 title: item.title,
                 file: undefined,
+              })) &&
+              course.materials.map((material) => ({
+                ...material,
+                link: undefined,
               })),
         };
       })
