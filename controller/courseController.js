@@ -140,7 +140,6 @@ const getCourse = async (req, res) => {
       return res.status(400).json({ error: "Course not found, check ID" });
 
     const paid = req.paid;
-
     if (!paid) {
       course.outline = course.outline.map((item) => ({
         ...item,
@@ -154,6 +153,20 @@ const getCourse = async (req, res) => {
           }))
         : [];
     }
+
+    res.json(course);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Server error", err });
+  }
+};
+
+const getCourseByAdmin = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await Course.findById(courseId).lean();
+    if (!course)
+      return res.status(400).json({ error: "Course not found, check ID" });
 
     res.json(course);
   } catch (err) {
@@ -224,6 +237,7 @@ module.exports = {
   handleCoursePayment,
   confirmPayment,
   getCourse,
+  getCourseByAdmin,
   getPayments,
   deletePayment,
 };
