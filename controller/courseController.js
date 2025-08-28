@@ -147,10 +147,12 @@ const getCourse = async (req, res) => {
         file: undefined,
       }));
 
-      course.materials = course.materials.map((material) => ({
-        ...material,
-        link: undefined,
-      }));
+      course.materials = course.materials.length
+        ? course.materials.map((material) => ({
+            ...material,
+            link: undefined,
+          }))
+        : [];
     }
 
     res.json(course);
