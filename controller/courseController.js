@@ -138,7 +138,6 @@ const getCourse = async (req, res) => {
     const course = await Course.findById(courseId).lean();
     if (!course)
       return res.status(400).json({ error: "Course not found, check ID" });
-
     const paid = req.paid;
     course.paid = paid;
     if (!paid) {
@@ -146,7 +145,6 @@ const getCourse = async (req, res) => {
         ...item,
         file: undefined,
       }));
-
       course.materials = (course.materials || []).map((material) => ({
         text: material.text,
         link: undefined,
@@ -195,7 +193,7 @@ const determinePaymentStatus = async (course, user) => {
 
 const getAllCourses = async (req, res) => {
   try {
-    const allCourses = await Course.find();
+    const allCourses = await Course.find().lean();
 
     const courses = await Promise.all(
       allCourses.map(async (course) => {
