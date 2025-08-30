@@ -200,7 +200,7 @@ const getAllCourses = async (req, res) => {
         const paid = await determinePaymentStatus(course._id, req.userId);
 
         return {
-          ...course.toObject(),
+          ...course,
           paid,
           outline: paid
             ? course.outline
