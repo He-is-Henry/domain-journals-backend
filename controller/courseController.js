@@ -176,6 +176,16 @@ const getCourseByAdmin = async (req, res) => {
   }
 };
 
+const deleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const result = await Course.findByIdAndDelete(courseId);
+    res.json(result);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 const determinePaymentStatus = async (course, user) => {
   console.log({ course, user });
   const payment = await CoursePayment.findOne({ course, user });
@@ -241,4 +251,5 @@ module.exports = {
   getCourseByAdmin,
   getPayments,
   deletePayment,
+  deleteCourse,
 };

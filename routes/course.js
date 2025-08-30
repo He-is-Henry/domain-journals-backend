@@ -8,7 +8,12 @@ const verifyCoursePayment = require("../middleware/verifyCoursePayment");
 router.get("/", verifyJWT, courseController.getAllCourses);
 router.post("/", verifyAdminJWT, courseController.addCourse);
 router.get("/payments", verifyAdminJWT, courseController.getPayments);
-router.delete("/:paymentId", verifyAdminJWT, courseController.deletePayment);
+router.delete(
+  "/payment/:paymentId",
+  verifyAdminJWT,
+  courseController.deletePayment
+);
+router.delete("/:courseId", verifyAdminJWT, courseController.deleteCourse);
 router.post("/pay/:course", verifyJWT, courseController.handleCoursePayment);
 router.patch("/:paymentId", verifyAdminJWT, courseController.confirmPayment);
 router.put("/:courseId", verifyAdminJWT, courseController.editCourse);
