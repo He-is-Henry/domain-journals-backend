@@ -14,7 +14,12 @@ const courseSchema = new schema({
   materials: {
     type: [{ text: String, link: String }],
     default: [],
-    required: [true, "A course materials is required"],
+    required: [true, "Course materials are required"],
+  },
+  texts: {
+    type: [{ title: String, text: String }],
+    default: [],
+    required: [true, "Course texts are required"],
   },
   originalPrice: String,
   off: String,
