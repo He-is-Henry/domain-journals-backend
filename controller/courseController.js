@@ -7,8 +7,15 @@ const addCourse = async (req, res) => {
   try {
     const isAdmin = req.role === "admin";
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
-    const { title, description, outline, materials, price, originalPrice } =
-      req.body;
+    const {
+      title,
+      description,
+      outline,
+      materials,
+      texts,
+      price,
+      originalPrice,
+    } = req.body;
     let off;
     if (originalPrice) {
       if (originalPrice < price)
@@ -23,6 +30,7 @@ const addCourse = async (req, res) => {
       description,
       outline,
       materials,
+      texts,
       price,
       originalPrice,
       off,
@@ -37,8 +45,15 @@ const editCourse = async (req, res) => {
   try {
     const isAdmin = req.role === "admin";
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
-    const { title, description, outline, materials, price, originalPrice } =
-      req.body;
+    const {
+      title,
+      description,
+      outline,
+      materials,
+      texts,
+      price,
+      originalPrice,
+    } = req.body;
     const { courseId } = req.params;
     const course = await Course.findById(courseId);
     let off;
@@ -50,6 +65,7 @@ const editCourse = async (req, res) => {
     if (description) course.description = description;
     if (outline) course.outline = outline;
     if (materials) course.materials = materials;
+    if (texts) course.texts = texts;
     if (price) course.price = price;
     if (originalPrice) course.originalPrice = originalPrice;
     if (originalPrice) course.off = off;
