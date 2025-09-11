@@ -11,6 +11,9 @@ const addCourse = async (req, res) => {
       title,
       description,
       outline,
+      outlineHeading,
+      materialsHeading,
+      textsHeading,
       materials,
       texts,
       price,
@@ -28,6 +31,9 @@ const addCourse = async (req, res) => {
     const course = await Course.create({
       title,
       description,
+      outlineHeading,
+      materialsHeading,
+      textsHeading,
       outline,
       materials,
       texts,
@@ -49,6 +55,9 @@ const editCourse = async (req, res) => {
       title,
       description,
       outline,
+      outlineHeading,
+      materialsHeading,
+      textsHeading,
       materials,
       texts,
       price,
@@ -63,6 +72,9 @@ const editCourse = async (req, res) => {
     }
     if (title) course.title = title;
     if (description) course.description = description;
+    if (outlineHeading) course.outlineHeading = outlineHeading;
+    if (materialsHeading) course.materialsHeading = materialsHeading;
+    if (textsHeading) course.textsHeading = textsHeading;
     if (outline) course.outline = outline;
     if (materials) course.materials = materials;
     if (texts) course.texts = texts;
