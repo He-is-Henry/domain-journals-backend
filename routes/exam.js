@@ -12,7 +12,12 @@ router.post(
   verifyRoles("admin"),
   examsController.createExam
 );
-router.get("/view", verifyJWT, verifyCoursePayment, examsController.viewExam);
+router.get(
+  "/view/:courseId",
+  verifyJWT,
+  verifyCoursePayment,
+  examsController.viewExam
+);
 router.get(
   "/:courseId",
   verifyJWT,
