@@ -26,10 +26,10 @@ const viewExam = async (req, res) => {
     console.log(courseId, "68afe2c1b11b5682581d34aa");
     const exam = await Exam.findOne({ course: courseId });
     const { questions, ...viewable } = exam;
-    res.json({ ...exam.toObject() });
+    res.json({ ...viewable, count: exam.questions.length });
   } catch (err) {
     console.log(err);
-    res.status(500).json(viewable);
+    res.status(500).json({ error: err.message });
   }
 };
 
