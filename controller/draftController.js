@@ -62,7 +62,7 @@ const saveDraft = async (req, res) => {
       await draft.save();
     }
 
-    res.json({ message: "Draft saved", draft });
+    res.json({ message: "Draft saved", startTime });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });

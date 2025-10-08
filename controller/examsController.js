@@ -19,6 +19,20 @@ const createExam = async (req, res) => {
   }
 };
 
+const viewExam = async (req, res) => {
+  try {
+    if (!req.paid) throw new Error("User hasn't paid yet");
+    const { courseId } = req.params;
+    console.log(courseId, "68afe2c1b11b5682581d34aa");
+    const exam = await Exam.findOne({ course: courseId });
+
+    res.json({ ...exam.toObject() });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const getExam = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
@@ -77,4 +91,5 @@ module.exports = {
   getExam,
   editExam,
   deleteExam,
+  viewExam,
 };
