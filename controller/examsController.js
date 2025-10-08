@@ -25,7 +25,7 @@ const viewExam = async (req, res) => {
     const { courseId } = req.params;
     const exam = await Exam.findOne({ course: courseId });
     if (!exam) throw new Error("Exam doesn't exist for this course");
-    const { questions, ...viewable } = exam;
+    const { questions, ...viewable } = exam.toObject();
     res.json({ ...viewable, count: exam.questions.length });
   } catch (err) {
     console.log(err);
