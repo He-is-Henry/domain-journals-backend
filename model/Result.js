@@ -11,7 +11,7 @@ const resultsSchema = new schema(
     exam: {
       type: schema.Types.ObjectId,
       ref: "Exam",
-      required: [true, "A course is required"],
+      required: [true, "An exam id is required"],
     },
     questions: {
       type: [

@@ -1,6 +1,33 @@
 const Exam = require("../model/Exam");
 const Result = require("../model/Result");
 
+const deleteDraft = async (exam, user) => {
+  const draft = await Result.findOne({ exam, user });
+  return await Result.deleteOne();
+};
+
+const finalizeResults = (questions, answers) => {
+  let score = 0;
+  const calculations = questions.map((q, i) => {
+    const userAnswer = answers[i]?.answerIndex;
+    const correct = q.correctAnswer === userAnswer;
+    if (correct) score++;
+    return {
+      text: q.text,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      userAnswer,
+      correct,
+    };
+  });
+  const correctAnswers = calculations.filter((r) => r.correct);
+  if (correctAnswers.length !== score)
+    throw new Error(
+      `${{ correctAnswersLength: correctAnswers.length, score }}`
+    );
+
+  return score;
+};
 const evaluateExams = async (req, res) => {
   try {
     const user = req.userId;
@@ -17,7 +44,7 @@ const evaluateExams = async (req, res) => {
       );
 
     const now = new Date();
-    const endTime = new Date(attempt.startTime + 30 * 60000);
+    const endTime = new Date(attempt.startTime + exam.duration * 60000);
     const graceEndTime = new Date(endTime.getTime() + 60000 * 5);
     console.log(graceEndTime.toLocaleTimeString());
 
@@ -28,33 +55,15 @@ const evaluateExams = async (req, res) => {
     if (!exam) throw new Error("Exam not found");
     const questions = exam.questions;
     const totalScore = questions.length;
-    let score = 0;
-    const calculations = questions.map((q, i) => {
-      const userAnswer = answers[i]?.answerIndex;
-      const correct = q.correctAnswer === userAnswer;
-      if (correct) score++;
-      return {
-        text: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-        userAnswer,
-        correct,
-      };
-    });
-    const correctAnswers = calculations.filter((r) => r.correct);
-    if (correctAnswers.length !== score)
-      throw new Error(
-        `${{ correctAnswersLength: correctAnswers.length, score }}`
-      );
-
+    const score = finalizeResults(questions, answers);
     const results = await Result.create({
       user,
-      exam,
+      exam: examId,
       questions,
       score,
       totalScore,
     });
-
+    await deleteDraft(examId, user);
     console.log(results);
     res.json({
       score: `${score}/${totalScore}`,
@@ -80,4 +89,4 @@ const getResults = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-module.exports = { evaluateExams, getResults };
+module.exports = { evaluateExams, getResults, finalizeResults };
