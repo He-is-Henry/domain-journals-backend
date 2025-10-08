@@ -25,11 +25,11 @@ const viewExam = async (req, res) => {
     const { courseId } = req.params;
     console.log(courseId, "68afe2c1b11b5682581d34aa");
     const exam = await Exam.findOne({ course: courseId });
-
+    const { questions, ...viewable } = exam;
     res.json({ ...exam.toObject() });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json(viewable);
   }
 };
 

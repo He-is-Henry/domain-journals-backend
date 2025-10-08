@@ -1,5 +1,7 @@
 const Draft = require("../model/Draft");
 const Exam = require("../model/Exam");
+const Result = require("../model/Result");
+
 const { finalizeResults } = require("./resultController");
 
 const saveDraft = async (req, res) => {
@@ -27,7 +29,7 @@ const saveDraft = async (req, res) => {
         lastDraft.completed = true;
         await lastDraft.save();
         const questions = exam.questions;
-        const score = finalizeResults(questions, answers);
+        const { score, calculations } = finalizeResults(questions, answers);
         const results = await Result.create({
           user,
           exam: examId,

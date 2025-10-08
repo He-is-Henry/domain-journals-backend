@@ -26,7 +26,7 @@ const finalizeResults = (questions, answers) => {
       `${{ correctAnswersLength: correctAnswers.length, score }}`
     );
 
-  return score;
+  return { score, calculations };
 };
 const evaluateExams = async (req, res) => {
   try {
@@ -55,7 +55,7 @@ const evaluateExams = async (req, res) => {
     if (!exam) throw new Error("Exam not found");
     const questions = exam.questions;
     const totalScore = questions.length;
-    const score = finalizeResults(questions, answers);
+    const { score, calculations } = finalizeResults(questions, answers);
     const results = await Result.create({
       user,
       exam: examId,
