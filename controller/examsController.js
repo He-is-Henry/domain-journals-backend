@@ -23,8 +23,8 @@ const viewExam = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
     const { courseId } = req.params;
-    console.log(courseId, "68afe2c1b11b5682581d34aa");
     const exam = await Exam.findOne({ course: courseId });
+    if (!exam) throw new Error("Exam doesn't exist for this course");
     const { questions, ...viewable } = exam;
     res.json({ ...viewable, count: exam.questions.length });
   } catch (err) {
