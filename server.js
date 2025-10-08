@@ -39,6 +39,8 @@ app.use("/review", require("./routes/review"));
 app.use("/message", require("./routes/message"));
 app.use("/course", require("./routes/course"));
 app.use("/newsletter", require("./routes/newsletter"));
+app.use("/exam", require("./routes/exam"));
+app.use("/result", require("./routes/result"));
 app.get("/*splat", (req, res) => {
   res.sendFile(filePath);
 });
