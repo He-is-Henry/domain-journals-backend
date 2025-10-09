@@ -11,7 +11,7 @@ const createExam = async (req, res) => {
       duration,
       description,
       questions,
-    }).lean();
+    });
     res.json(exam);
   } catch (err) {
     console.log(err);
