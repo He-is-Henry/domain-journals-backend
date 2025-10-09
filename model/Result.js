@@ -5,7 +5,7 @@ const resultsSchema = new schema(
   {
     user: {
       type: schema.Types.ObjectId,
-      ref: "User",
+      ref: "Author",
       required: [true, "User is required"],
     },
     exam: {
@@ -17,8 +17,10 @@ const resultsSchema = new schema(
       type: [
         {
           text: String,
+          options: [String],
           correctAnswer: String,
-          Answer: String,
+          explanation: String,
+          answer: String,
         },
       ],
       required: true,

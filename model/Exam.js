@@ -14,7 +14,9 @@ const examSchema = new schema(
         explanation: String,
       },
     ],
-    attempts: [{ user: schema.Types.ObjectId, startTime: Date }],
+    attempts: [
+      { user: schema.Types.ObjectId, startTime: Date, submitted: Boolean },
+    ],
   },
   { timestamps: true }
 );

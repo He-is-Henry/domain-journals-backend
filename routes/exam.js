@@ -13,6 +13,12 @@ router.post(
   examsController.createExam
 );
 router.get(
+  "/all",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  examsController.getAllExamsDetails
+);
+router.get(
   "/view/:courseId",
   verifyJWT,
   verifyCoursePayment,

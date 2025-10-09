@@ -4,7 +4,7 @@ const schema = mongoose.Schema;
 const draftSchema = new schema(
   {
     exam: { type: schema.Types.ObjectId, ref: "Exam", required: true },
-    user: { type: schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: schema.Types.ObjectId, ref: "Author", required: true },
     answers: [
       {
         questionIndex: Number,

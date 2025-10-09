@@ -1,5 +1,9 @@
 const Exam = require("../model/Exam");
+const Result = require("../model/Result");
 
+const removeAnswers = (questions) => {
+  return questions.map((q) => ({ ...q, correctAnswer: null }));
+};
 const createExam = async (req, res) => {
   try {
     let { course, duration, description, questions } = req.body;
@@ -45,26 +49,57 @@ const sendExam = async (req, res) => {
   }
 };
 
+const getAllExamsDetails = async (req, res) => {
+  try {
+    const allExams = await Exam.find();
+    res.json(allExams);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const getExam = async (req, res) => {
   try {
+    console.log("Here!");
     if (!req.paid) throw new Error("User hasn't paid yet");
     const { courseId } = req.params;
-    console.log(courseId, "68afe2c1b11b5682581d34aa");
     const exam = await Exam.findOne({ course: courseId });
 
+    const alreadySubmitted = await Result.findOne({
+      exam: exam._id,
+      user: req.userId,
+    });
+    console.log({ alreadySubmitted });
+    if (alreadySubmitted) throw new Error("You already took this test");
     console.log(exam.attempts);
     console.log(req.userId);
     const now = new Date();
     const endTime = new Date(now.getTime() + exam.duration * 60000);
-    if (endTime > now) return res.json({ ...exam.toObject(), now, endTime });
     const attempt = exam.attempts.find(
       (a) => a?.user.toString() === req.userId.toString()
     );
+    console.log({ attempt });
     if (!attempt) {
       exam.attempts.push({ user: req.userId, startTime: now });
       await exam.save();
+    } else {
+      const now = attempt.startTime;
+      const endTime = new Date(now.getTime() + exam.duration * 60000);
+      console.log({ ...exam.toObject(), now, endTime });
+      return res.json({
+        ...exam.toObject(),
+        questions: removeAnswers(exam.toObject().questions),
+        now,
+        endTime,
+      });
     }
-    res.json({ ...exam.toObject(), now, endTime });
+    res.json({
+      ...exam.toObject(),
+      questions: removeAnswers(exam.toObject().questions),
+      now,
+      endTime,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
@@ -107,5 +142,6 @@ module.exports = {
   editExam,
   deleteExam,
   viewExam,
+  getAllExamsDetails,
   sendExam,
 };

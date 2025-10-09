@@ -6,6 +6,7 @@ const verifyJWT = require("../middleware/verifyJWT");
 const verifyRoles = require("../middleware/verifyRoles");
 const verifyCoursePayment = require("../middleware/verifyCoursePayment");
 
+router.get("/all", verifyJWT, resultController.getUserResults);
 router.post(
   "/:examId",
   verifyJWT,
@@ -13,10 +14,12 @@ router.post(
   resultController.evaluateExams
 );
 router.get(
-  "/:courseId",
+  "/",
   verifyAdminJWT,
   verifyRoles("admin"),
   resultController.getResults
 );
+
+router.get("/single/:examId", verifyJWT, resultController.getResult);
 
 module.exports = router;

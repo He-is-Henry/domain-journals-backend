@@ -10,8 +10,9 @@ const saveDraft = async (req, res) => {
     const exam = await Exam.findById(examId);
     const userId = req.userId;
     const { answers, currentQuestion } = req.body;
+    console.log(exam.attempts);
     const attempt = exam.attempts.find(
-      (a) => a?.user.toString() === user.toString()
+      (a) => a?.user.toString() === userId.toString()
     );
     if (!attempt) throw new Error("No attempt found for this user");
 
@@ -33,7 +34,7 @@ const saveDraft = async (req, res) => {
         const results = await Result.create({
           user,
           exam: examId,
-          questions,
+          questions: calculations,
           score,
           totalScore: questions.length,
         });
