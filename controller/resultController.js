@@ -3,7 +3,7 @@ const Result = require("../model/Result");
 
 const deleteDraft = async (exam, user) => {
   const draft = await Result.findOne({ exam, user });
-  return await Result.deleteOne();
+  return await draft.deleteOne();
 };
 
 const finalizeResults = (questions, answers) => {

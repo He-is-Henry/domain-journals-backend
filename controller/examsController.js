@@ -57,10 +57,10 @@ const getExam = async (req, res) => {
     const now = new Date();
     const endTime = new Date(now.getTime() + exam.duration * 60000);
     if (endTime > now) return res.json({ ...exam.toObject(), now, endTime });
-
-    if (
-      !exam.attempts.find((a) => a?.user.toString() === req.userId.toString())
-    ) {
+    const attempt = exam.attempts.find(
+      (a) => a?.user.toString() === req.userId.toString()
+    );
+    if (!attempt) {
       exam.attempts.push({ user: req.userId, startTime: now });
       await exam.save();
     }
