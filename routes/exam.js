@@ -19,6 +19,12 @@ router.get(
   examsController.viewExam
 );
 router.get(
+  "/send/:courseId",
+  verifyJWT,
+  verifyCoursePayment,
+  examsController.sendExam
+);
+router.get(
   "/:courseId",
   verifyJWT,
   verifyCoursePayment,
