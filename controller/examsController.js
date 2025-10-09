@@ -52,15 +52,18 @@ const getExam = async (req, res) => {
     console.log(courseId, "68afe2c1b11b5682581d34aa");
     const exam = await Exam.findOne({ course: courseId });
 
-    if (exam.attempts.find((a) => a?.user.toString() === req.userId.toString()))
-      throw new Error("User has already attempted");
-
     console.log(exam.attempts);
     console.log(req.userId);
     const now = new Date();
     const endTime = new Date(now.getTime() + exam.duration * 60000);
-    exam.attempts.push({ user: req.userId, startTime: now });
-    await exam.save();
+    if (endTime > now) return res.json({ ...exam.toObject(), now, endTime });
+
+    if (
+      !exam.attempts.find((a) => a?.user.toString() === req.userId.toString())
+    ) {
+      exam.attempts.push({ user: req.userId, startTime: now });
+      await exam.save();
+    }
     res.json({ ...exam.toObject(), now, endTime });
   } catch (err) {
     console.log(err);
