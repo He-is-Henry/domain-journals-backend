@@ -110,6 +110,7 @@ const getExam = async (req, res) => {
         return res.status(400).json({
           score: `${score}/${exam.questions.length}`,
           calculations,
+          error: "Time's up, please go to profile > results to see your score",
         });
       }
 
