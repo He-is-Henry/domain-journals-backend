@@ -17,6 +17,7 @@ const finalizeResults = (questions, answers) => {
       options: q.options,
       correctAnswer: q.correctAnswer,
       answer,
+      explanation: q.explanation,
       correct,
     };
   });

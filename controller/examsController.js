@@ -5,7 +5,11 @@ const { deleteDraft } = require("./resultController");
 const { finalizeResults } = require("./resultController");
 
 const removeAnswers = (questions) => {
-  return questions.map((q) => ({ ...q, correctAnswer: null }));
+  return questions.map((q) => ({
+    ...q,
+    correctAnswer: null,
+    explanation: null,
+  }));
 };
 const createExam = async (req, res) => {
   try {
