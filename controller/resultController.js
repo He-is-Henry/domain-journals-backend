@@ -3,8 +3,7 @@ const Exam = require("../model/Exam");
 const Result = require("../model/Result");
 
 const deleteDraft = async (exam, user) => {
-  const draft = await Draft.findOne({ exam, user });
-  return await draft.deleteOne();
+  return await Draft.findOneAndDelete({ exam, user });
 };
 
 const finalizeResults = (questions, answers) => {
@@ -120,4 +119,5 @@ module.exports = {
   getResult,
   finalizeResults,
   getUserResults,
+  deleteDraft,
 };

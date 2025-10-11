@@ -1,5 +1,8 @@
+const Draft = require("../model/Draft");
 const Exam = require("../model/Exam");
 const Result = require("../model/Result");
+const { deleteDraft } = require("./resultController");
+const { finalizeResults } = require("./resultController");
 
 const removeAnswers = (questions) => {
   return questions.map((q) => ({ ...q, correctAnswer: null }));
@@ -29,8 +32,10 @@ const viewExam = async (req, res) => {
     const { courseId } = req.params;
     const exam = await Exam.findOne({ course: courseId });
     if (!exam) throw new Error("Exam doesn't exist for this course");
-    const { questions, ...viewable } = exam.toObject();
-    res.json({ ...viewable, count: exam.questions.length });
+    const examObj = exam.toObject();
+    examObj.count = examObj.questions.length;
+    delete examObj.questions;
+    res.json(examObj);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
@@ -60,33 +65,55 @@ const getAllExamsDetails = async (req, res) => {
 };
 
 const getExam = async (req, res) => {
+  const user = req.userId;
   try {
-    console.log("Here!");
     if (!req.paid) throw new Error("User hasn't paid yet");
+
     const { courseId } = req.params;
     const exam = await Exam.findOne({ course: courseId });
+    if (!exam) throw new Error("Exam not found");
 
-    const alreadySubmitted = await Result.findOne({
-      exam: exam._id,
-      user: req.userId,
-    });
-    console.log({ alreadySubmitted });
+    // Already submitted?
+    const alreadySubmitted = await Result.findOne({ exam: exam._id, user });
     if (alreadySubmitted) throw new Error("You already took this test");
-    console.log(exam.attempts);
-    console.log(req.userId);
-    const now = new Date();
-    const endTime = new Date(now.getTime() + exam.duration * 60000);
+
+    // Find existing attempt
     const attempt = exam.attempts.find(
-      (a) => a?.user.toString() === req.userId.toString()
+      (a) => a?.user.toString() === user.toString()
     );
-    console.log({ attempt });
+
+    const now = new Date();
+
     if (!attempt) {
-      exam.attempts.push({ user: req.userId, startTime: now });
+      exam.attempts.push({ user, startTime: now });
       await exam.save();
     } else {
-      const now = attempt.startTime;
-      const endTime = new Date(now.getTime() + exam.duration * 60000);
-      console.log({ ...exam.toObject(), now, endTime });
+      const draft = await Draft.findOne({ user, exam: exam._id });
+      const answers = draft?.answers || [];
+      const startTime = attempt.startTime;
+      const endTime = new Date(startTime.getTime() + exam.duration * 60000);
+
+      // Time’s up
+      if (now > endTime) {
+        const { score, calculations } = finalizeResults(
+          exam.questions,
+          answers
+        );
+        const result = await Result.create({
+          user,
+          exam: exam._id,
+          questions: calculations,
+          score,
+          totalScore: exam.questions.length,
+        });
+        await deleteDraft(exam._id, user);
+        return res.status(400).json({
+          score: `${score}/${exam.questions.length}`,
+          calculations,
+        });
+      }
+
+      // Still within time
       return res.json({
         ...exam.toObject(),
         questions: removeAnswers(exam.toObject().questions),
@@ -94,7 +121,9 @@ const getExam = async (req, res) => {
         endTime,
       });
     }
-    res.json({
+
+    const endTime = new Date(now.getTime() + exam.duration * 60000);
+    return res.json({
       ...exam.toObject(),
       questions: removeAnswers(exam.toObject().questions),
       now,
@@ -109,8 +138,8 @@ const getExam = async (req, res) => {
 const editExam = async (req, res) => {
   try {
     const { examId } = req.params;
-    const { duration, description, questions } = req.body;
-    if (!course || !duration || !description || !Array.isArray(questions))
+    let { duration, description, questions } = req.body;
+    if (!examId || !duration || !description || !Array.isArray(questions))
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
     const exam = await Exam.findById(examId).lean();

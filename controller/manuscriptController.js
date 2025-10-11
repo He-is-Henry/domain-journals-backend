@@ -1,5 +1,4 @@
 const { Manuscript } = require("../model/Manuscript");
-const User = require("../model/User");
 const sendMail = require("../uttils/sendMail");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
@@ -178,14 +177,14 @@ const editManuscript = async (req, res) => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
   const id = decoded.id;
   const details = req.body;
-  const { status, ...otherDetails } = details;
+  delete details.status;
   if (!details) res.status(400).json({ error: "Fields to edit are required" });
 
   try {
     const result = await Manuscript.findByIdAndUpdate(
       id,
       {
-        $set: otherDetails,
+        $set: details,
       },
       {
         $new: true,

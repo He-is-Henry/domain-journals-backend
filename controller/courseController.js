@@ -1,7 +1,6 @@
 const Author = require("../model/Author");
 const Course = require("../model/Course");
 const CoursePayment = require("../model/CoursePayment");
-const Exam = require("../model/Exam");
 const sendMail = require("../uttils/sendMail");
 
 const addCourse = async (req, res) => {

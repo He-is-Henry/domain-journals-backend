@@ -1,7 +1,6 @@
 const Draft = require("../model/Draft");
 const Exam = require("../model/Exam");
 const Result = require("../model/Result");
-
 const { finalizeResults } = require("./resultController");
 
 const saveDraft = async (req, res) => {
@@ -32,16 +31,16 @@ const saveDraft = async (req, res) => {
         const questions = exam.questions;
         const { score, calculations } = finalizeResults(questions, answers);
         const results = await Result.create({
-          user,
+          userId,
           exam: examId,
           questions: calculations,
           score,
           totalScore: questions.length,
         });
-        await deleteDraft(examId, userId);
+        await this.deleteDraft(examId, userId);
         console.log(results);
         res.json({
-          score: `${score}/${totalScore}`,
+          score: `${score}/${questions.length}`,
           calculations,
         });
       }

@@ -1,5 +1,4 @@
 const { Message } = require("../model/Message");
-const User = require("../model/User");
 const sendMail = require("../uttils/sendMail");
 
 const newMessage = async (req, res) => {
@@ -15,7 +14,9 @@ const newMessage = async (req, res) => {
       messageObject,
       success: "Message succesfully sent, we'll reply via email",
     });
-  } catch (error) {}
+  } catch (error) {
+    console.log(console.log(error));
+  }
 };
 
 const getAllMessages = async (req, res) => {
