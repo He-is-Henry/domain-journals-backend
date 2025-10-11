@@ -5,7 +5,7 @@ const verifyCoursePayment = async (req, res, next) => {
     const { courseId: course } = req.params;
     const user = req.userId;
     const payment = await CoursePayment.find({ user, course });
-    if (!payment || payment.confirmed) req.paid = false;
+    if (!payment || !payment.confirmed) req.paid = false;
     else req.paid = true;
     next();
   } catch (err) {

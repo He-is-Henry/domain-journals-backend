@@ -68,7 +68,7 @@ const getExam = async (req, res) => {
   const user = req.userId;
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
-
+    console.log(req.paid);
     const { courseId } = req.params;
     const exam = await Exam.findOne({ course: courseId });
     if (!exam) throw new Error("Exam not found");
