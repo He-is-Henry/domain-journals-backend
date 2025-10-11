@@ -38,6 +38,8 @@ const saveDraft = async (req, res) => {
           totalScore: questions.length,
         });
         await this.deleteDraft(examId, userId);
+        exam.attempts.filter((a) => a.user !== userId);
+        await exam.save();
         console.log(results);
         res.json({
           score: `${score}/${questions.length}`,

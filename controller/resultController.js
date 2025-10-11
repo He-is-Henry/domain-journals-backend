@@ -62,6 +62,8 @@ const evaluateExams = async (req, res) => {
     const { score, calculations } = finalizeResults(questions, answers);
     const alreadySubmitted = await Result.findOne({ exam: examId, user });
     if (alreadySubmitted) return new Error("You already took this test");
+    exam.attempts.filter((a) => a.user !== user);
+    await exam.save();
     const results = await Result.create({
       user,
       exam: examId,

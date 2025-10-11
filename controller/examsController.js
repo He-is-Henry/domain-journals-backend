@@ -88,7 +88,15 @@ const getExam = async (req, res) => {
       exam.attempts.push({ user, startTime: now });
       await exam.save();
     } else {
-      const draft = await Draft.findOne({ user, exam: exam._id });
+      const userDraft = await Draft.findOne({ user, exam: exam._id });
+      const draft = userDraft
+        ? userDraft
+        : await Draft.create({
+            user,
+            exam: exam._id,
+            startTime: new Date(),
+            answers: [],
+          });
       const answers = draft?.answers || [];
       const startTime = attempt.startTime;
       const endTime = new Date(startTime.getTime() + exam.duration * 60000);
@@ -99,13 +107,15 @@ const getExam = async (req, res) => {
           exam.questions,
           answers
         );
-        const result = await Result.create({
+        await Result.create({
           user,
           exam: exam._id,
           questions: calculations,
           score,
           totalScore: exam.questions.length,
         });
+        exam.attempts.filter((a) => a.user !== user);
+        await exam.save();
         await deleteDraft(exam._id, user);
         return res.status(400).json({
           score: `${score}/${exam.questions.length}`,
