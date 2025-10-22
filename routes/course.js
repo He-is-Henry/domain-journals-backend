@@ -17,7 +17,12 @@ router.delete("/:courseId", verifyAdminJWT, courseController.deleteCourse);
 router.post("/pay/:course", verifyJWT, courseController.handleCoursePayment);
 router.patch("/:paymentId", verifyAdminJWT, courseController.confirmPayment);
 router.put("/:courseId", verifyAdminJWT, courseController.editCourse);
-router.get("/:courseId", verifyCoursePayment, courseController.getCourse);
+router.get(
+  "/:courseId",
+  verifyJWT,
+  verifyCoursePayment,
+  courseController.getCourse
+);
 router.get(
   "/admin/:courseId",
   verifyAdminJWT,

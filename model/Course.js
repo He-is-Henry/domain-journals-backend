@@ -41,4 +41,13 @@ const courseSchema = new schema({
   price: { type: Number, required: [true, "A course price is required"] },
 });
 
+courseSchema.virtual("exams", {
+  ref: "Exam",
+  localField: "_id",
+  foreignField: "course",
+});
+
+courseSchema.set("toObject", { virtuals: true });
+courseSchema.set("toJSON", { virtuals: true });
+
 module.exports = mongoose.model("Course", courseSchema);

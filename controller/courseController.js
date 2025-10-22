@@ -64,7 +64,11 @@ const editCourse = async (req, res) => {
       originalPrice,
     } = req.body;
     const { courseId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(courseId).populate({
+      path: "exams",
+      select: "description",
+    });
+
     let off;
     if (originalPrice) {
       const diff = originalPrice - price;
@@ -163,11 +167,17 @@ const deletePayment = async (req, res) => {
 const getCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const course = await Course.findById(courseId).lean();
+    const course = await Course.findById(courseId)
+      .populate({
+        path: "exams",
+        select: "description",
+      })
+      .lean();
     if (!course)
       return res.status(400).json({ error: "Course not found, check ID" });
     const paid = req.paid;
     course.paid = paid;
+    console.log(paid);
     if (!paid) {
       course.outline = course.outline.map((item) => ({
         ...item,
@@ -221,7 +231,12 @@ const determinePaymentStatus = async (course, user) => {
 
 const getAllCourses = async (req, res) => {
   try {
-    const allCourses = await Course.find().lean();
+    const allCourses = await Course.find()
+      .populate({
+        path: "exams",
+        select: "description",
+      })
+      .lean();
 
     const courses = await Promise.all(
       allCourses.map(async (course) => {

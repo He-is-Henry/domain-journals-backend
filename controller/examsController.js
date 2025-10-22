@@ -30,11 +30,29 @@ const createExam = async (req, res) => {
   }
 };
 
-const viewExam = async (req, res) => {
+const viewCourseExams = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
     const { courseId } = req.params;
-    const exam = await Exam.findOne({ course: courseId });
+    const exams = await Exam.find({ course: courseId });
+    if (!exams.length) throw new Error("Exams do not exist for this course");
+    const examsObj = exams.map((exam) => {
+      const examObj = exam.toObject();
+      examObj.count = examObj.questions.length;
+      delete examObj.questions;
+      return examObj;
+    });
+    res.json(examsObj);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+const viewExam = async (req, res) => {
+  try {
+    if (!req.paid) throw new Error("User hasn't paid yet");
+    const { examId } = req.params;
+    const exam = await Exam.findById(examId);
     if (!exam) throw new Error("Exam doesn't exist for this course");
     const examObj = exam.toObject();
     examObj.count = examObj.questions.length;
@@ -48,8 +66,8 @@ const viewExam = async (req, res) => {
 const sendExam = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
-    const { courseId } = req.params;
-    const exam = await Exam.findOne({ course: courseId });
+    const { examId } = req.params;
+    const exam = await Exam.findById(examId);
     if (!exam) throw new Error("Exam doesn't exist for this course");
     res.json(exam.toObject());
   } catch (err) {
@@ -68,13 +86,13 @@ const getAllExamsDetails = async (req, res) => {
   }
 };
 
-const getExam = async (req, res) => {
+const takeExam = async (req, res) => {
   const user = req.userId;
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
     console.log(req.paid);
-    const { courseId } = req.params;
-    const exam = await Exam.findOne({ course: courseId });
+    const { examId } = req.params;
+    const exam = await Exam.findById(examId);
     if (!exam) throw new Error("Exam not found");
 
     // Already submitted?
@@ -182,10 +200,11 @@ const deleteExam = async (req, res) => {
 
 module.exports = {
   createExam,
-  getExam,
+  takeExam,
   editExam,
   deleteExam,
   viewExam,
+  viewCourseExams,
   getAllExamsDetails,
   sendExam,
 };

@@ -18,23 +18,31 @@ router.get(
   verifyRoles("admin"),
   examsController.getAllExamsDetails
 );
+
 router.get(
-  "/view/:courseId",
+  "/all/:courseId",
+  verifyJWT,
+  verifyCoursePayment,
+  examsController.viewCourseExams
+);
+
+router.get(
+  "/view/:examId",
   verifyJWT,
   verifyCoursePayment,
   examsController.viewExam
 );
 router.get(
-  "/send/:courseId",
+  "/send/:examId",
   verifyJWT,
   verifyCoursePayment,
   examsController.sendExam
 );
 router.get(
-  "/:courseId",
+  "/:examId",
   verifyJWT,
   verifyCoursePayment,
-  examsController.getExam
+  examsController.takeExam
 );
 
 router.patch(
