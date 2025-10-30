@@ -175,7 +175,7 @@ const editExam = async (req, res) => {
     if (!examId || !duration || !description || !Array.isArray(questions))
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
-    const exam = await Exam.findById(examId).lean();
+    const exam = await Exam.findById(examId);
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
