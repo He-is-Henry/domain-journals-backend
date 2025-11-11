@@ -4,9 +4,11 @@ const path = require("path");
 const downloadFile = async (req, res) => {
   const fileId = req.query.url;
 
-  if (!fileId || !fileId.startsWith("https://res.cloudinary.com")) {
+  if (!fileId)
     return res.status(400).json({ error: "Invalid or missing file URL." });
-  }
+
+  if (fileId.endsWith(".doc") || fileId.endsWith("docx"))
+    return res.status(400).json({ error: "API download not necessary" });
   const rawFilename = path.basename(fileId);
 
   try {

@@ -1,4 +1,5 @@
 const { Accepted } = require("../model/AcceptedManuscripts");
+const Archive = require("../model/Archive");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
@@ -66,8 +67,9 @@ const getManuscript = async (req, res) => {
 };
 const getArchive = async (req, res) => {
   const { name } = req.params;
-  const archive = await Accepted.find({ journal: name });
-  res.json(archive);
+  const manuscripts = await Accepted.find({ journal: name });
+  const archive = await Archive.find({ journal: name });
+  res.json({ manuscripts, archive });
 };
 
 const publishManuscript = async (req, res) => {

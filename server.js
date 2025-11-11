@@ -42,6 +42,7 @@ app.use("/newsletter", require("./routes/newsletter"));
 app.use("/exam", require("./routes/exam"));
 app.use("/result", require("./routes/result"));
 app.use("/draft", require("./routes/draft"));
+app.use("/archives", require("./routes/archive"));
 app.get("/*splat", (req, res) => {
   res.sendFile(filePath);
 });
