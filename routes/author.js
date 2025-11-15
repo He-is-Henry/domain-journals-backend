@@ -3,7 +3,7 @@ const router = express.Router();
 const authorController = require("../controller/authorController");
 const verifyJWT = require("../middleware/verifyJWT");
 
-router.patch("/", verifyJWT, authorController.changeName);
+router.patch("/", verifyJWT, authorController.editDetails);
 router.post("/signup", authorController.signup);
 router.post("/login", authorController.login);
 router.post("/logout", authorController.logout);

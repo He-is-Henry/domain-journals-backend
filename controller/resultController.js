@@ -87,7 +87,10 @@ const evaluateExams = async (req, res) => {
 
 const getResults = async (req, res) => {
   try {
-    const results = await Result.find().populate("user", "name");
+    const results = await Result.find().populate(
+      "user",
+      "name level department"
+    );
     console.log(results);
     res.json(results);
   } catch (err) {

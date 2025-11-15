@@ -6,13 +6,20 @@ const sendMail = require("../uttils/sendMail");
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, matricNumber, department, level } = req.body;
     const authorExists = await Author.findOne({ email });
     if (authorExists)
       return res.status(403).json({ error: "Email already in use" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const author = await Author.create({ name, email, password: hashed });
+    const author = await Author.create({
+      name,
+      email,
+      password: hashed,
+      matricNumber,
+      department,
+      level,
+    });
     const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
       expiresIn: "365d",
     });
@@ -219,11 +226,14 @@ const getCurrentUser = async (req, res) => {
   res.status(200).json(author);
 };
 
-const changeName = async (req, res) => {
-  const { name } = req.body;
+const editDetails = async (req, res) => {
+  const { name, level, department, matricNumber } = req.body;
   const id = req.userId;
   const author = await Author.findById(id);
-  author.name = name;
+  if (name) author.name = name;
+  if (level) author.level = level;
+  if (department) author.department = department;
+  if (matricNumber) author.matricNumber = matricNumber;
   const result = await author.save();
   res.json(result);
 };
@@ -237,5 +247,5 @@ module.exports = {
   handleResetMail,
   handleVerifyKey,
   handleResetPassword,
-  changeName,
+  editDetails,
 };

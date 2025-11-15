@@ -23,6 +23,29 @@ const authorSchema = new mongoose.Schema({
   resetKeyExpires: {
     type: Date,
   },
+  department: {
+    type: String,
+    default: null,
+    enum: [
+      "anatomy",
+      "pharmacy",
+      "medical laboratory science",
+      "nursing",
+      "medical biochemistry",
+      "physiology",
+      "pharmacology",
+      "medicine and surgery",
+      "dentistry",
+    ],
+  },
+  level: {
+    type: Number,
+    enum: [100, 200, 300, 400, 500, 600, 700, 800],
+  },
+  matricNumber: {
+    type: String,
+    default: null,
+  },
 });
 
 module.exports = mongoose.model("Author", authorSchema);
