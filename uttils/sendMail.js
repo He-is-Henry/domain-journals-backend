@@ -3,17 +3,17 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   host: "smtp.zoho.com",
   port: 587,
-  secure: false, // STARTTLS
-  requireTLS: true, // enforce TLS
+  secure: false,
+  requireTLS: true,
   auth: {
-    user: process.env.EMAIL_USER, // your Zoho email
-    pass: process.env.EMAIL_PASS, // the new App Password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
   tls: {
     minVersion: "TLSv1.2",
     rejectUnauthorized: false,
   },
-  family: 4, // force IPv4 to avoid Render+Zoho timeout
+  family: 4,
 });
 
 const sendMail = async ({
