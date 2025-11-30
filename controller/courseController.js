@@ -118,6 +118,47 @@ const handleCoursePayment = async (req, res) => {
       text: "Your payment has been initiated and we're now confirming it.",
       html: `<p>Your payment of ${courseData.price} for "<b>${courseData.title}</b>" has been initiated and we're now confirming your payment. We will reach out to you as soon as possible.</p>`,
     });
+
+    await sendMail({
+      to: "domainjournals.dev@gmail.com",
+      subject: "A payment has been made",
+      text: `${author.name} just made a payment of ${courseData.price} for "${courseData.title}". Verify this`,
+      html: `
+<div style="font-family: Arial, sans-serif; background: #f7f9f7; padding: 20px;">
+  <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; padding: 25px; border: 1px solid #e2e8e2;">
+    
+    <h2 style="color: #093238; margin-top: 0;">New Course Payment Alert</h2>
+
+    <p style="font-size: 15px; color: #333;">
+      Hello Admin,
+    </p>
+
+    <p style="font-size: 15px; color: #333;">
+      A user has initiated a payment for one of the courses on <b>Domain Journals</b>. Here are the details:
+    </p>
+
+    <div style="background: #f1f8e9; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #659377;">
+      <p style="margin: 5px 0; font-size: 15px;"><b>User:</b> ${author.name}</p>
+      <p style="margin: 5px 0; font-size: 15px;"><b>Course:</b> ${courseData.title}</p>
+      <p style="margin: 5px 0; font-size: 15px;"><b>Amount:</b> ₦${courseData.price}</p>
+      <p style="margin: 5px 0; font-size: 15px;"><b>Email:</b> ${author.email}</p>
+    </div>
+
+    <p style="font-size: 15px; color: #333;">
+      Please log in to the admin dashboard to verify this payment.
+    </p>
+
+    <a href="https://www.domainjournals.com/admin/payments"
+       style="display: inline-block; margin-top: 15px; background: #659377; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-size: 15px;">
+      Review Payment
+    </a>
+
+    <p style="font-size: 13px; color: #777; margin-top: 30px;">
+      This is an automated notification from Domain Journals.
+    </p>
+  </div>
+</div>`,
+    });
   } catch (err) {
     console.error("Payment Error:", err);
     res
@@ -153,7 +194,7 @@ const confirmPayment = async (req, res) => {
 };
 const deletePayment = async (req, res) => {
   try {
-    const isAdmin = req.role === "admin";
+    const isAdmin = req.role === "your dashboardadmin";
     if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
     const { paymentId } = req.params;
     const result = await CoursePayment.findByIdAndDelete(paymentId);

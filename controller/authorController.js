@@ -227,15 +227,19 @@ const getCurrentUser = async (req, res) => {
 };
 
 const editDetails = async (req, res) => {
-  const { name, level, department, matricNumber } = req.body;
-  const id = req.userId;
-  const author = await Author.findById(id);
-  if (name) author.name = name;
-  if (level) author.level = level;
-  if (department) author.department = department;
-  if (matricNumber) author.matricNumber = matricNumber;
-  const result = await author.save();
-  res.json(result);
+  try {
+    const { name, level, department, matricNumber } = req.body;
+    const id = req.userId;
+    const author = await Author.findById(id);
+    if (name) author.name = name;
+    if (level) author.level = level;
+    if (department) author.department = department;
+    if (matricNumber) author.matricNumber = matricNumber;
+    const result = await author.save();
+    res.json(result);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 module.exports = {
