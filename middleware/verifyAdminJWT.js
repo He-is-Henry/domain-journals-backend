@@ -22,6 +22,8 @@ const verifyAdminJWT = async (req, res, next) => {
     req.userId = user._id;
     req.name = user.name;
     req.role = user.role;
+
+    console.log(user.role);
     if (user.role === "editor") req.access = user.access;
 
     next();
