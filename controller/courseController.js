@@ -170,8 +170,7 @@ const handleCoursePayment = async (req, res) => {
 const confirmPayment = async (req, res) => {
   try {
     const isAdmin = req.role === "admin";
-    if (!isAdmin)
-      return res.status(401).json({ error: "Unauthorized" + req.role });
+    if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
     const { paymentId } = req.params;
     const payment = await CoursePayment.findById(paymentId);
     if (!payment) return res.status(404).json({ error: "Payment not found" });
@@ -195,9 +194,8 @@ const confirmPayment = async (req, res) => {
 };
 const deletePayment = async (req, res) => {
   try {
-    const isAdmin = req.role === "your dashboardadmin";
-    if (!isAdmin)
-      return res.status(401).json({ error: "Unauthorized" + req.role });
+    const isAdmin = req.role === "admin";
+    if (!isAdmin) return res.status(401).json({ error: "Unauthorized" });
     const { paymentId } = req.params;
     const result = await CoursePayment.findByIdAndDelete(paymentId);
 
