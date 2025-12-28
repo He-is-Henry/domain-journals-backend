@@ -21,6 +21,7 @@ const sendMail = async ({
       cc,
       bcc,
     });
+    console.log(data);
     console.log("Email sent:", data.id);
     return data;
   } catch (error) {
