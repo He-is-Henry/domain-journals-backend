@@ -247,7 +247,7 @@ const verifyResetToken = async (req, res) => {
     const { token, password } = req.body;
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded) return res.status(400).json({ error: "Invalid token" });
-    const hashed = bcrypt.hash(password);
+    const hashed = await bcrypt.hash(password, 10);
 
     const id = decoded.id;
 
