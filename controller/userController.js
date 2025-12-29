@@ -411,7 +411,7 @@ const resetAuthorPassword = async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
 
-    const author = Author.find({ email });
+    const author = await Author.findOne({ email });
     const name = author.name;
     if (!author)
       return res
