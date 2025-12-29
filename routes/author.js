@@ -10,6 +10,7 @@ router.post("/logout", authorController.logout);
 router.post("/reset", authorController.handleResetMail);
 router.post("/verify", authorController.handleVerifyKey);
 router.post("/resetPw", authorController.handleResetPassword);
+router.post("/completeReset", authorController.verifyResetToken);
 router.get("/me", verifyJWT, authorController.getCurrentUser);
 router.patch("/avatar", verifyJWT, authorController.updateAvatar);
 

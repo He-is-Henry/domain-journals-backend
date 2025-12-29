@@ -435,29 +435,6 @@ const resetAuthorPassword = async (req, res) => {
   }
 };
 
-const verifyResetToken = async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded) return res.status(400).json({ error: "Invalid token" });
-    const hashed = bcrypt.hash(password);
-
-    const id = decoded.id;
-
-    const author = await Author.findById(id);
-    if (!author.adminReset)
-      return res.status(400).json({ error: "Link already used" });
-    author.password = hashed;
-    author.adminReset = false;
-
-    author.save();
-    res.json({ message: "Password reset successful" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-};
-
 module.exports = {
   logout,
   sendResetKey,
@@ -474,5 +451,4 @@ module.exports = {
   getAllUsers,
   changeName,
   resetAuthorPassword,
-  verifyResetToken,
 };
