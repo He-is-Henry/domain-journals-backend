@@ -412,6 +412,7 @@ const resetAuthorPassword = async (req, res) => {
     if (!email) return res.status(400).json({ error: "Email is required" });
 
     const author = Author.find({ email });
+    const name = author.name;
     if (!author)
       return res
         .status(400)
@@ -427,7 +428,7 @@ const resetAuthorPassword = async (req, res) => {
 
     author.adminReset = true;
     author.save();
-    res.json(token);
+    res.json({ token, name });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
