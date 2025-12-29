@@ -245,6 +245,12 @@ const editDetails = async (req, res) => {
 const verifyResetToken = async (req, res) => {
   try {
     const { token, password } = req.body;
+
+    if (!token || !password)
+      return res
+        .status(400)
+        .json({ error: "Missing parameters, token or password" });
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded) return res.status(400).json({ error: "Invalid token" });
     const hashed = await bcrypt.hash(password, 10);
