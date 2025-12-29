@@ -12,6 +12,8 @@ router
 
 router.post("/reset", userController.sendResetKey);
 router.post("/verify", userController.verifyResetKey);
+router.post("/resetAuthor", userController.resetAuthorPassword);
+router.post("/verifyAuthor", userController.verifyResetToken);
 router.post("/resetPW", userController.handleResetPassword);
 router.get("/me", verifyAdminJWT, userController.getCurrentUser);
 router.post("/login", userController.login);

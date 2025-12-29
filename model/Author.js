@@ -23,6 +23,10 @@ const authorSchema = new mongoose.Schema({
   resetKeyExpires: {
     type: Date,
   },
+  adminReset: {
+    type: Boolean,
+    default: false,
+  },
   department: {
     type: String,
     default: null,

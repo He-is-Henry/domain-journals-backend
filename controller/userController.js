@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../model/User");
 const sendMail = require("../uttils/sendMail");
 const bcrypt = require("bcrypt");
+const Author = require("../model/Author");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -405,6 +406,57 @@ const logout = (req, res) => {
     .json({ message: "Logged out" });
 };
 
+const resetAuthorPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const author = Author.find({ email });
+    if (!author)
+      return res
+        .status(400)
+        .json({ error: "Author with that email doesn't exist" });
+
+    const token = jwt.sign(
+      {
+        id: author._id,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    author.adminReset = true;
+    author.save();
+    res.json(token);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const verifyResetToken = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) return res.status(400).json({ error: "Invalid token" });
+    const hashed = bcrypt.hash(password);
+
+    const id = decoded.id;
+
+    const author = await Author.findById(id);
+    if (!author.adminReset)
+      return res.status(400).json({ error: "Link already used" });
+    author.password = hashed;
+    author.adminReset = false;
+
+    author.save();
+    res.json({ message: "Password reset successful" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   logout,
   sendResetKey,
@@ -420,4 +472,6 @@ module.exports = {
   updateAvatar,
   getAllUsers,
   changeName,
+  resetAuthorPassword,
+  verifyResetToken,
 };
