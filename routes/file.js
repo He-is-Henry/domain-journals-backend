@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { upload, uploadImage } = require("../uploads");
+const { upload, uploadImage, uploadReceipt } = require("../uploads");
 const fileController = require("../controller/fileController");
 const verifyJWT = require("../middleware/verifyJWT");
 const verifyAdminJWT = require("../middleware/verifyAdminJWT");
@@ -14,6 +14,12 @@ router.post(
   "/avatar",
   verifyJWT,
   uploadImage.single("avatar"),
+  fileController.uploadAvatar
+);
+router.post(
+  "/receipt",
+  verifyJWT,
+  uploadReceipt.single("receipt"),
   fileController.uploadAvatar
 );
 router.post(

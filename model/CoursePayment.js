@@ -13,6 +13,8 @@ const coursePaymentSchema = new schema(
       ref: "Course",
       required: [true, "A course is required"],
     },
+    receipt: String,
+    accountName: String,
     confirmed: { type: Boolean, required: true, default: false },
   },
   { timestamps: true }

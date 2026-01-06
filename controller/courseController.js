@@ -95,12 +95,26 @@ const editCourse = async (req, res) => {
 const handleCoursePayment = async (req, res) => {
   try {
     const { course } = req.params;
+    const { receipt, accountName } = req.body;
     const user = req.userId;
 
+    const alreadyExisting = await CoursePayment.findOne({
+      accountName,
+      user: { $ne: user, $exists: true },
+    });
     const author = await Author.findById(user);
     if (!author) return res.status(404).json({ error: "User not found" });
+    if (!receipt) return res.status(400).json({ error: "Receipt is required" });
+    if (!accountName)
+      return res.status(400).json({ error: "Account name is required" });
 
     const courseData = await Course.findById(course);
+    if (alreadyExisting)
+      return res.status(400).json({
+        error:
+          "This account name has already been used pay for " + courseData.title,
+      });
+
     if (!courseData) return res.status(404).json({ error: "Course not found" });
 
     const existingPayment = await CoursePayment.findOne({ user, course });
@@ -109,7 +123,7 @@ const handleCoursePayment = async (req, res) => {
         .status(409)
         .json({ error: "You already initiated a payment for this course" });
 
-    const payment = await CoursePayment.create({ user, course });
+    const payment = await CoursePayment.create({ user, course, receipt });
     res.json({ message: "Payment initiated successfully", payment });
 
     await sendMail({
