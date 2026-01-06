@@ -47,8 +47,8 @@ const imageStorage = new CloudinaryStorage({
 const receiptStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "avatars",
-    resource_type: "receipt",
+    folder: "receipt",
+    resource_type: "image",
   },
 });
 
