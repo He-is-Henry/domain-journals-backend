@@ -15,7 +15,7 @@ const newMessage = async (req, res) => {
       success: "Message succesfully sent, we'll reply via email",
     });
   } catch (error) {
-    console.log(console.log(error));
+    console.log(error);
   }
 };
 

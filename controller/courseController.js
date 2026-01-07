@@ -123,7 +123,12 @@ const handleCoursePayment = async (req, res) => {
         .status(409)
         .json({ error: "You already initiated a payment for this course" });
 
-    const payment = await CoursePayment.create({ user, course, receipt });
+    const payment = await CoursePayment.create({
+      user,
+      course,
+      receipt,
+      accountName,
+    });
     res.json({ message: "Payment initiated successfully", payment });
 
     await sendMail({
