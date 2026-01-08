@@ -138,11 +138,12 @@ const handleCoursePayment = async (req, res) => {
       html: `<p>Your payment of ${courseData.price} for "<b>${courseData.title}</b>" has been initiated and we're now confirming your payment. We will reach out to you as soon as possible.</p>`,
     });
 
-    await sendMail({
-      to: "domainjournals.dev@gmail.com",
-      subject: "A payment has been made",
-      text: `${author.name} just made a payment of ${courseData.price} for "${courseData.title}". Verify this`,
-      html: `
+    setTimeout(async () => {
+      await sendMail({
+        to: "domainjournals.dev@gmail.com",
+        subject: "A payment has been made",
+        text: `${author.name} just made a payment of ${courseData.price} for "${courseData.title}". Verify this`,
+        html: `
 <div style="font-family: Arial, sans-serif; background: #f7f9f7; padding: 20px;">
   <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 10px; padding: 25px; border: 1px solid #e2e8e2;">
     
@@ -177,7 +178,8 @@ const handleCoursePayment = async (req, res) => {
     </p>
   </div>
 </div>`,
-    });
+      });
+    }, 2000);
   } catch (err) {
     console.error("Payment Error:", err);
     res
