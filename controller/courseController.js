@@ -207,9 +207,14 @@ const confirmPayment = async (req, res) => {
 
     await sendMail({
       to: author.email,
-      subject: `Your payment of ${price} for "${title}" has been confirmed!`,
+      subject: `Payment approved for ${title}!`,
       text: "Your payment has been confirmed, Thank you for choosing us.",
-      html: `<p> Your payment of ${price} for "${title}"  has been confirmed, Thank you for choosing us.</p>`,
+      html: `<div> 
+      <p> Payment approved. </p>
+       <p> Your payment has been verified successfully </p>
+      <p> You now have access to ${title} </p></div>
+     
+      `,
     });
   } catch (err) {
     console.log(err);
