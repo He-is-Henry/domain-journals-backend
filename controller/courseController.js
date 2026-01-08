@@ -194,8 +194,9 @@ const confirmPayment = async (req, res) => {
     const payment = await CoursePayment.findById(paymentId);
     if (!payment) return res.status(404).json({ error: "Payment not found" });
     const { price, title } = await Course.findById(payment.course);
-
+    console.log(payment.user);
     const author = await Author.findById(payment.user);
+    if (!author) return res.status(404).json({ error: "Author not found" });
 
     payment.confirmed = true;
     await payment.save();
