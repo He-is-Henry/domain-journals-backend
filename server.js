@@ -10,7 +10,6 @@ const connectDB = require("./config/db");
 const PORT = process.env.PORT || 3500;
 const path = require("path");
 const corsOptions = require("./config/corsOptions");
-const { runCommand } = require("./script");
 const filePath = path.resolve(__dirname, "view", "404.html");
 const indexPath = path.resolve(__dirname, "view", "index.html");
 
@@ -55,6 +54,5 @@ mongoose.connection.once("connected", () => {
   app.listen(PORT, "0.0.0.0", () => {
     console.log("Server running on port", PORT);
     console.log(process.env.NODE_ENV);
-    runCommand();
   });
 });
