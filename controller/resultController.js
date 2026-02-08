@@ -101,17 +101,29 @@ const getResults = async (req, res) => {
 
 const getUserResults = async (req, res) => {
   const user = req.userId;
-  const results = await Result.find({ user }).populate("exam", "description");
+  const results = await Result.find({ user }).populate(
+    "exam",
+    "description canReview",
+  );
+
   res.json(results);
 };
 
 const getResult = async (req, res) => {
   try {
-    const { examId: exam } = req.params;
-    console.log({ exam });
+    const { examId } = req.params;
     const user = req.userId;
-    const result = await Result.findOne({ exam, user });
-    console.log(result);
+
+    const result = await Result.findOne({ exam: examId, user })
+      .populate("exam", "canReview")
+      .lean();
+
+    if (!result) {
+      return res.status(404).json({ error: "Result not found" });
+    }
+
+    const canReview = result.exam.canReview;
+    if (!canReview) result.questions = undefined;
     res.json(result);
   } catch (err) {
     console.log(err);

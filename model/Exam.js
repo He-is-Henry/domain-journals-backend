@@ -14,11 +14,19 @@ const examSchema = new schema(
         explanation: String,
       },
     ],
+    locked: {
+      type: Boolean,
+      default: false,
+    },
+    canReview: {
+      type: Boolean,
+      default: true,
+    },
     attempts: [
       { user: schema.Types.ObjectId, startTime: Date, submitted: Boolean },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Exam", examSchema);

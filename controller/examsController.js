@@ -101,7 +101,7 @@ const takeExam = async (req, res) => {
 
     // Find existing attempt
     const attempt = exam.attempts.find(
-      (a) => a?.user.toString() === user.toString()
+      (a) => a?.user.toString() === user.toString(),
     );
 
     const now = new Date();
@@ -127,7 +127,7 @@ const takeExam = async (req, res) => {
       if (now > endTime) {
         const { score, calculations } = finalizeResults(
           exam.questions,
-          answers
+          answers,
         );
         await Result.create({
           user,
@@ -198,6 +198,19 @@ const deleteExam = async (req, res) => {
   }
 };
 
+const toggleReview = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const exam = await Exam.findById(examId);
+    const canReview = exam.canReview;
+    exam.canReview = !canReview;
+    await exam.save();
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   createExam,
   takeExam,
@@ -207,4 +220,5 @@ module.exports = {
   viewCourseExams,
   getAllExamsDetails,
   sendExam,
+  toggleReview,
 };
