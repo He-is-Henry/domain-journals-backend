@@ -171,7 +171,7 @@ const takeExam = async (req, res) => {
 const editExam = async (req, res) => {
   try {
     const { examId } = req.params;
-    let { duration, description, questions } = req.body;
+    let { duration, description, questions, toggle } = req.body;
     if (!examId || !duration || !description || !Array.isArray(questions))
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
@@ -179,6 +179,9 @@ const editExam = async (req, res) => {
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
+    if (toggle) {
+      exam.canReview = toggle;
+    }
     await exam.save();
     res.json(exam);
   } catch (err) {
@@ -198,19 +201,6 @@ const deleteExam = async (req, res) => {
   }
 };
 
-const toggleReview = async (req, res) => {
-  try {
-    const { examId } = req.params;
-    const exam = await Exam.findById(examId);
-    const canReview = exam.canReview;
-    exam.canReview = !canReview;
-    await exam.save();
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err.message });
-  }
-};
-
 module.exports = {
   createExam,
   takeExam,
@@ -220,5 +210,4 @@ module.exports = {
   viewCourseExams,
   getAllExamsDetails,
   sendExam,
-  toggleReview,
 };
