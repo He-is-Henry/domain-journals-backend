@@ -195,7 +195,7 @@ const confirmPayment = async (req, res) => {
     const { paymentId } = req.params;
     const payment = await CoursePayment.findById(paymentId);
     if (!payment) return res.status(404).json({ error: "Payment not found" });
-    const { price, title } = await Course.findById(payment.course);
+    const { title } = await Course.findById(payment.course);
     console.log(payment.user);
     const author = await Author.findById(payment.user);
     console.log(author);
@@ -327,7 +327,7 @@ const getAllCourses = async (req, res) => {
                 link: undefined,
               })),
         };
-      })
+      }),
     );
 
     res.json(courses);

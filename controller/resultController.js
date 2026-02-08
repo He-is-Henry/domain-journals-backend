@@ -24,7 +24,7 @@ const finalizeResults = (questions, answers) => {
   const correctAnswers = calculations.filter((r) => r.correct);
   if (correctAnswers.length !== score)
     throw new Error(
-      `${{ correctAnswersLength: correctAnswers.length, score }}`
+      `${{ correctAnswersLength: correctAnswers.length, score }}`,
     );
 
   return { score, calculations };
@@ -37,18 +37,18 @@ const evaluateExams = async (req, res) => {
     const { answers } = req.body;
     const exam = await Exam.findById(examId);
     const attempt = exam.attempts.find(
-      (a) => a?.user.toString() === user.toString()
+      (a) => a?.user.toString() === user.toString(),
     );
 
     if (!attempt)
       throw new Error(
-        "You are not allowed to submit because there was not former attempt made"
+        "You are not allowed to submit because there was not former attempt made",
       );
 
     await exam.save();
     const now = new Date();
     const endTime = new Date(
-      new Date(attempt.startTime).getTime() + exam.duration * 60000
+      new Date(attempt.startTime).getTime() + exam.duration * 60000,
     );
     const graceEndTime = new Date(endTime.getTime() + 60000 * 5);
     console.log(graceEndTime.toLocaleTimeString());
@@ -89,7 +89,7 @@ const getResults = async (req, res) => {
   try {
     const results = await Result.find().populate(
       "user",
-      "name level department"
+      "name level department matricNumber",
     );
     console.log(results);
     res.json(results);
