@@ -171,7 +171,7 @@ const takeExam = async (req, res) => {
 const editExam = async (req, res) => {
   try {
     const { examId } = req.params;
-    let { duration, description, questions, toggle } = req.body;
+    let { duration, description, questions, canReview } = req.body;
     if (!examId || !duration || !description || !Array.isArray(questions))
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
@@ -179,8 +179,8 @@ const editExam = async (req, res) => {
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
-    if (toggle) {
-      exam.canReview = toggle;
+    if (canReview) {
+      exam.canReview = canReview;
     }
     await exam.save();
     res.json(exam);
