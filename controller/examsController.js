@@ -179,9 +179,8 @@ const editExam = async (req, res) => {
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
-    if (canReview) {
-      exam.canReview = canReview;
-    }
+    exam.canReview = canReview;
+
     await exam.save();
     res.json(exam);
   } catch (err) {
