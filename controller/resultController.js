@@ -105,7 +105,11 @@ const getUserResults = async (req, res) => {
     "exam",
     "description canReview",
   );
-
+  results.forEach((r) => {
+    const canReview = r.exam.canReview;
+    if (!canReview) r.questions = undefined;
+    return r;
+  });
   res.json(results);
 };
 
