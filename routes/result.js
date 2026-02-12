@@ -11,13 +11,19 @@ router.post(
   "/:examId",
   verifyJWT,
   verifyCoursePayment,
-  resultController.evaluateExams
+  resultController.evaluateExams,
 );
 router.get(
   "/",
   verifyAdminJWT,
   verifyRoles("admin"),
-  resultController.getResults
+  resultController.getResults,
+);
+router.delete(
+  "/:id",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  resultController.deleteResult,
 );
 
 router.get("/single/:examId", verifyJWT, resultController.getResult);

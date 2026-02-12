@@ -54,7 +54,9 @@ const evaluateExams = async (req, res) => {
     console.log(graceEndTime.toLocaleTimeString());
 
     if (now > graceEndTime) {
-      throw new Error(`Submission too late — exam time has elapsed`);
+      throw new Error(
+        "Submitted — exam time has elapsed, find result on profile > my results",
+      );
     }
 
     if (!exam) throw new Error("Exam not found");
@@ -135,6 +137,27 @@ const getResult = async (req, res) => {
   }
 };
 
+const deleteResult = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "Invalid data" });
+    const result = await Result.findById(id);
+
+    if (!result) {
+      return res.status(404).json({ error: "Result not found" });
+    }
+    const user = result.user;
+    const exam = result.exam;
+
+    await deleteDraft(exam, user);
+    await result.deleteOne();
+
+    res.json({ message: "Result deleted succesfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
 module.exports = {
   evaluateExams,
   getResults,
@@ -142,4 +165,5 @@ module.exports = {
   finalizeResults,
   getUserResults,
   deleteDraft,
+  deleteResult,
 };
