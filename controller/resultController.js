@@ -151,8 +151,11 @@ const deleteResult = async (req, res) => {
 
     await deleteDraft(exam, user);
     await result.deleteOne();
-
-    res.json({ message: "Result deleted succesfully" });
+    const results = await Result.find().populate(
+      "user",
+      "name level department matricNumber",
+    );
+    res.json({ message: "Result deleted succesfully", results });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
