@@ -147,9 +147,11 @@ const deleteResult = async (req, res) => {
       return res.status(404).json({ error: "Result not found" });
     }
     const user = result.user;
-    const exam = result.exam;
+    const examId = result.exam;
+    const exam = await Exam.findById(examId);
+    exam.attempts = exam.attempts.filter(att => att.user !== user)
 
-    await deleteDraft(exam, user);
+    await deleteDraft(examId, user);
     await result.deleteOne();
     const results = await Result.find().populate(
       "user",
