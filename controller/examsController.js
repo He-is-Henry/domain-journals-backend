@@ -105,12 +105,17 @@ const takeExam = async (req, res) => {
     );
 
     const now = new Date();
+    const userDraft = await Draft.findOne({ user, exam: exam._id });
+
+    if (attempt && !userDraft) {
+      exam.attempts = exam.attempts.filter(att => att.user !== user) 
+    }
 
     if (!attempt) {
       exam.attempts.push({ user, startTime: now });
       await exam.save();
     } else {
-      const userDraft = await Draft.findOne({ user, exam: exam._id });
+      
       const draft = userDraft
         ? userDraft
         : await Draft.create({
