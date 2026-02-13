@@ -150,6 +150,7 @@ const deleteResult = async (req, res) => {
     const examId = result.exam;
     const exam = await Exam.findById(examId);
     exam.attempts = exam.attempts.filter(att => att.user !== user)
+    await exam.save()
 
     await deleteDraft(examId, user);
     await result.deleteOne();
