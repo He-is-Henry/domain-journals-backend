@@ -108,7 +108,8 @@ const takeExam = async (req, res) => {
     const userDraft = await Draft.findOne({ user, exam: exam._id });
 
     if (attempt && !userDraft) {
-      exam.attempts = exam.attempts.filter(att => att.user !== user) 
+      exam.attempts = exam.attempts.filter(att => att.user !== user);
+      await exam.save();
     }
 
     if (!attempt) {
