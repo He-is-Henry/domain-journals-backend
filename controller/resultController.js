@@ -118,9 +118,8 @@ const getUserResults = async (req, res) => {
 const getResult = async (req, res) => {
   try {
     const { examId } = req.params;
-    const user = req.userId;
 
-    const result = await Result.findOne({ exam: examId, user })
+    const result = await Result.find({ exam: examId })
       .populate("exam", "canReview")
       .lean();
 
@@ -149,8 +148,8 @@ const deleteResult = async (req, res) => {
     const user = result.user;
     const examId = result.exam;
     const exam = await Exam.findById(examId);
-    exam.attempts = exam.attempts.filter(att => att.user !== user)
-    await exam.save()
+    exam.attempts = exam.attempts.filter((att) => att.user !== user);
+    await exam.save();
 
     await deleteDraft(examId, user);
     await result.deleteOne();
