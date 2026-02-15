@@ -118,16 +118,18 @@ const getUserResults = async (req, res) => {
 const getResult = async (req, res) => {
   try {
     const { examId } = req.params;
-
+    const exam = await Exam.findById(examId);
+    const description = exam.description;
     const results = await Result.find({ exam: examId }).populate(
-      "exam",
-      "description canReview",
+      "user",
+      "name level department matricNumber",
     );
     if (!results) {
       return res.status(404).json({ error: "Results not found" });
     }
+    const response = { description, results };
 
-    res.json(results);
+    res.json(response);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
