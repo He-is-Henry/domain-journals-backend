@@ -65,7 +65,7 @@ const evaluateExams = async (req, res) => {
     const { score, calculations } = finalizeResults(questions, answers);
     const alreadySubmitted = await Result.findOne({ exam: examId, user });
     if (alreadySubmitted) return new Error("You already took this test");
-    exam.attempts = exam.attempts.filter((a) => a.user !== user);
+    exam.attempts.filter((a) => a.user !== user);
     await exam.save();
     const results = await Result.create({
       user,
@@ -119,17 +119,15 @@ const getResult = async (req, res) => {
   try {
     const { examId } = req.params;
 
-    const result = await Result.find({ exam: examId })
-      .populate("exam", "canReview")
-      .lean();
-
-    if (!result) {
-      return res.status(404).json({ error: "Result not found" });
+    const results = await Result.find({ exam: examId }).populate(
+      "exam",
+      "description canReview",
+    );
+    if (!results) {
+      return res.status(404).json({ error: "Results not found" });
     }
 
-    const canReview = result.exam.canReview;
-    if (!canReview) result.questions = undefined;
-    res.json(result);
+    res.json(results);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: err.message });
@@ -146,12 +144,9 @@ const deleteResult = async (req, res) => {
       return res.status(404).json({ error: "Result not found" });
     }
     const user = result.user;
-    const examId = result.exam;
-    const exam = await Exam.findById(examId);
-    exam.attempts = exam.attempts.filter((att) => att.user !== user);
-    await exam.save();
+    const exam = result.exam;
 
-    await deleteDraft(examId, user);
+    await deleteDraft(exam, user);
     await result.deleteOne();
     const results = await Result.find().populate(
       "user",
