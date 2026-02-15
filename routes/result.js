@@ -19,6 +19,12 @@ router.get(
   verifyRoles("admin"),
   resultController.getResults,
 );
+router.get(
+  ":/examId",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  resultController.getResult,
+);
 router.delete(
   "/:id",
   verifyAdminJWT,
