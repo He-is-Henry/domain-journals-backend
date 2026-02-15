@@ -68,11 +68,14 @@ const reviseExam = async (req, res) => {
     if (!req.paid) throw new Error("User hasn't paid yet");
     const { examId } = req.params;
     const exam = await Exam.findById(examId);
+    const { questions, description } = exam;
     if (!exam.locked)
       return res.status(400).json({ error: "Cannot revise a unlocked exam" });
     if (!exam) return res.status(404).json({ error: "Cannot find exam" });
-    const examObj = exam.toObject();
-    examObj.count = examObj.questions.length;
+    const examObj = {
+      questions,
+      description,
+    };
     res.json(examObj);
   } catch (err) {
     console.log(err);
