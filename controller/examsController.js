@@ -110,6 +110,8 @@ const takeExam = async (req, res) => {
     const { examId } = req.params;
     const exam = await Exam.findById(examId);
     if (!exam) throw new Error("Exam not found");
+    if (exam.locked)
+      return res.status(403).json({ error: "Exam is locked, cannot take!" });
 
     // Already submitted?
     const alreadySubmitted = await Result.findOne({ exam: exam._id, user });
@@ -193,6 +195,18 @@ const editExam = async (req, res) => {
     if (isNaN(duration)) duration = Number(duration);
     const exam = await Exam.findById(examId);
 
+    if (exam.locked) {
+      if (locked !== false) {
+        // exam is locked and you're not trying to unlock
+        return res.status(403).json({ error: "Cannot edit a locked exam" });
+      } else if (exam.locked && locked == true) {
+        // locked but you're sending an update to unlock
+        exam.locked = locked;
+        await Result.deleteMany({ exam: examId });
+        await exam.save();
+        res.json(exam);
+      }
+    }
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
