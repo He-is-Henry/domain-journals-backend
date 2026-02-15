@@ -121,12 +121,14 @@ const takeExam = async (req, res) => {
     );
 
     const now = new Date();
+    const userDraft = await Draft.findOne({ user, exam: exam._id });
+
 
     if (!attempt) {
       exam.attempts.push({ user, startTime: now });
       await exam.save();
     } else {
-      const userDraft = await Draft.findOne({ user, exam: exam._id });
+      
       const draft = userDraft
         ? userDraft
         : await Draft.create({
@@ -152,7 +154,7 @@ const takeExam = async (req, res) => {
           score,
           totalScore: exam.questions.length,
         });
-        exam.attempts.filter((a) => a.user !== user);
+        exam.attempts = exam.attempts.filter((a) => a.user !== user);
         await exam.save();
         await deleteDraft(exam._id, user);
         return res.status(400).json({

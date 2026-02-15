@@ -65,7 +65,7 @@ const evaluateExams = async (req, res) => {
     const { score, calculations } = finalizeResults(questions, answers);
     const alreadySubmitted = await Result.findOne({ exam: examId, user });
     if (alreadySubmitted) return new Error("You already took this test");
-    exam.attempts.filter((a) => a.user !== user);
+    exam.attempts = exam.attempts.filter((a) => a.user !== user);
     await exam.save();
     const results = await Result.create({
       user,
@@ -147,9 +147,12 @@ const deleteResult = async (req, res) => {
       return res.status(404).json({ error: "Result not found" });
     }
     const user = result.user;
-    const exam = result.exam;
+    const examId = result.exam;
+    const exam = await Exam.findById(examId);
+    exam.attempts = exam.attempts.filter(att => att.user !== user)
+    await exam.save()
 
-    await deleteDraft(exam, user);
+    await deleteDraft(examId, user);
     await result.deleteOne();
     const results = await Result.find().populate(
       "user",
