@@ -10,53 +10,59 @@ router.post(
   "/",
   verifyAdminJWT,
   verifyRoles("admin"),
-  examsController.createExam
+  examsController.createExam,
 );
 router.get(
   "/all",
   verifyAdminJWT,
   verifyRoles("admin"),
-  examsController.getAllExamsDetails
+  examsController.getAllExamsDetails,
 );
 
 router.get(
   "/all/:courseId",
   verifyJWT,
   verifyCoursePayment,
-  examsController.viewCourseExams
+  examsController.viewCourseExams,
 );
 
 router.get(
   "/view/:examId",
   verifyJWT,
   verifyCoursePayment,
-  examsController.viewExam
+  examsController.viewExam,
 );
 router.get(
   "/send/:examId",
   verifyJWT,
   verifyCoursePayment,
-  examsController.sendExam
+  examsController.sendExam,
+);
+router.get(
+  "/revise/:examId",
+  verifyJWT,
+  verifyCoursePayment,
+  examsController.reviseExam,
 );
 router.get(
   "/:examId",
   verifyJWT,
   verifyCoursePayment,
-  examsController.takeExam
+  examsController.takeExam,
 );
 
 router.patch(
   "/:examId",
   verifyAdminJWT,
   verifyRoles("admin"),
-  examsController.editExam
+  examsController.editExam,
 );
 
 router.delete(
   "/:examId",
   verifyAdminJWT,
   verifyRoles("admin"),
-  examsController.deleteExam
+  examsController.deleteExam,
 );
 
 module.exports = router;

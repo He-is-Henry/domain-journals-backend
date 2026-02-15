@@ -63,6 +63,22 @@ const viewExam = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const reviseExam = async (req, res) => {
+  try {
+    if (!req.paid) throw new Error("User hasn't paid yet");
+    const { examId } = req.params;
+    const exam = await Exam.findById(examId);
+    if (!exam.locked)
+      return res.status(400).json({ error: "Cannot revise a unlocked exam" });
+    if (!exam) return res.status(404).json({ error: "Cannot find exam" });
+    const examObj = exam.toObject();
+    examObj.count = examObj.questions.length;
+    res.json(examObj);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
 const sendExam = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");
@@ -209,4 +225,5 @@ module.exports = {
   viewCourseExams,
   getAllExamsDetails,
   sendExam,
+  reviseExam,
 };
