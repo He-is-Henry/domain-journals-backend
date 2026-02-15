@@ -123,12 +123,10 @@ const takeExam = async (req, res) => {
     const now = new Date();
     const userDraft = await Draft.findOne({ user, exam: exam._id });
 
-
     if (!attempt) {
       exam.attempts.push({ user, startTime: now });
       await exam.save();
     } else {
-      
       const draft = userDraft
         ? userDraft
         : await Draft.create({
@@ -189,15 +187,17 @@ const takeExam = async (req, res) => {
 const editExam = async (req, res) => {
   try {
     const { examId } = req.params;
-    let { duration, description, questions, canReview } = req.body;
+    let { duration, description, questions, canReview, locked } = req.body;
     if (!examId || !duration || !description || !Array.isArray(questions))
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
     const exam = await Exam.findById(examId);
+
     exam.duration = duration;
     exam.description = description;
     exam.questions = questions;
     exam.canReview = canReview;
+    exam.locked = locked;
 
     await exam.save();
     res.json(exam);
