@@ -20,7 +20,7 @@ router.get(
   resultController.getResults,
 );
 router.get(
-  ":/examId",
+  "/:examId",
   verifyAdminJWT,
   verifyRoles("admin"),
   resultController.getResult,
