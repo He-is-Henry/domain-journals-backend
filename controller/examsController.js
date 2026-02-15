@@ -199,12 +199,12 @@ const editExam = async (req, res) => {
       if (locked !== false) {
         // exam is locked and you're not trying to unlock
         return res.status(403).json({ error: "Cannot edit a locked exam" });
-      } else if (exam.locked && locked == true) {
+      } else if (locked === false) {
         // locked but you're sending an update to unlock
         exam.locked = locked;
         await Result.deleteMany({ exam: examId });
         await exam.save();
-        res.json(exam);
+        return res.json(exam);
       }
     }
     exam.duration = duration;
