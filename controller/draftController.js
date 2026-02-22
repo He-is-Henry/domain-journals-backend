@@ -40,7 +40,7 @@ const saveDraft = async (req, res) => {
         exam.attempts.filter((a) => a.user !== userId);
         await exam.save();
         console.log(results);
-        res.json({
+        return res.json({
           score: `${score}/${questions.length}`,
           calculations,
         });
