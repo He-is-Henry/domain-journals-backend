@@ -2,9 +2,13 @@ const mongoose = require("mongoose");
 const schema = mongoose.Schema;
 
 const archiveSchema = new schema({
-  volume: { type: Number, required: true },
   issue: { type: Number, required: true },
   file: { type: String, required: true },
+  year: {
+    type: Number,
+    required: true,
+    default: new Date().getFullYear(),
+  },
   journal: {
     type: String,
     enum: [

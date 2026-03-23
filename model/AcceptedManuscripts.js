@@ -23,16 +23,20 @@ const manuscriptSchema = new Schema({
       "domain-journal-of-biological-sciences",
     ],
   },
+  year: {
+    type: Number,
+    required: true,
+    default: new Date().getFullYear(),
+  },
   articleType: { type: String, required: true },
   abstract: { type: String, required: true },
   file: { type: String, required: true },
   country: { type: String, required: true },
-  volume: { type: Number, default: new Date().getFullYear() - 2024 },
   issue: { type: Number, required: true },
   paymentReference: String,
 });
 
 module.exports.Accepted = mongoose.model(
   "AcceptedManuscript",
-  manuscriptSchema
+  manuscriptSchema,
 );

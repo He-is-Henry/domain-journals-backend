@@ -122,15 +122,13 @@ const getAllManuscripts = async (req, res) => {
     const fullManuscriptDetails = await Promise.all(
       manuscripts.map(async (manuscript) => {
         manuscript = manuscript.toObject();
-        manuscript.volume = new Date().getFullYear() - 2024;
-
         const journal = await journals.findOne({ name: manuscript.journal });
         manuscript.issue = journal?.issue || null;
 
         console.log(journal);
 
         return manuscript;
-      })
+      }),
     );
 
     res.json(fullManuscriptDetails.reverse());
@@ -188,7 +186,7 @@ const editManuscript = async (req, res) => {
       },
       {
         $new: true,
-      }
+      },
     );
     if (!result) res.status(404).json({ error: "Manuscript not found" });
     return res.json(result);

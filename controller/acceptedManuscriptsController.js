@@ -50,10 +50,15 @@ const getUserManuscript = async (req, res) => {
 const getByIssue = async (req, res) => {
   const { name, issue } = req.params;
   console.log(name, issue);
+  const latestDoc = await Accepted.findOne({ journal: name }).sort({
+    year: -1,
+  });
+  const latestYear = latestDoc?.year;
+
   const currentIssue = await Accepted.find({
     journal: name,
     issue,
-    volume: Number(new Date().getFullYear() - 2024),
+    year: latestYear,
   });
   res.json(currentIssue);
 };
@@ -95,7 +100,6 @@ const publishManuscript = async (req, res) => {
       abstract: manuscript.abstract,
       file: manuscript.file,
       country: manuscript.country,
-      volume: manuscript.volume,
       paymentReference: manuscript.paymentReference,
       articleType: manuscript.articleType,
       issue,
@@ -122,7 +126,7 @@ const publishManuscript = async (req, res) => {
         <p>Dear ${manuscript.author},</p>
         <p>We are pleased to inform you that your manuscript titled:</p>
         <blockquote>${manuscript.title}</blockquote>
-        <p>has been successfully <strong>published</strong> in the journal <strong>${accepted.journal}</strong>, Volume ${accepted.volume}, Issue ${accepted.issue}.</p>
+        <p>has been successfully <strong>published</strong> in the current issue.</p>
 
         <p>You can view your published manuscript here: 
           <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
