@@ -1,5 +1,4 @@
-const { supabase } = require("../api/supabase.js");
-
+const { supabase } = require("../config/supabase");
 module.exports.uploadPdf = async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: "No file selected" });
