@@ -15,7 +15,10 @@ module.exports.uploadPdf = async (req, res) => {
       .from("archive")
       .upload(fileName, file.buffer, { contentType: file.mimetype });
 
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      console.log(error);
+      return res.status(500).json({ error: error.message });
+    }
 
     const { data } = supabase.storage.from("archive").getPublicUrl(fileName);
     res.json({ url: data.publicUrl, path: fileName });
