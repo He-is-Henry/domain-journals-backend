@@ -1,3 +1,4 @@
+const { supabase } = require("../config/supabase");
 const { Accepted } = require("../model/AcceptedManuscripts");
 const Archive = require("../model/Archive");
 const { Manuscript } = require("../model/Manuscript");
@@ -73,7 +74,13 @@ const getManuscript = async (req, res) => {
 const getArchive = async (req, res) => {
   const { name } = req.params;
   const manuscripts = await Accepted.find({ journal: name });
-  const archive = await Archive.find({ journal: name });
+  const archiveList = await Archive.find({ journal: name });
+  const archive = archiveList.map((a) => ({
+    ...a,
+    fileUrl: a.file?.startsWith("http")
+      ? a.file
+      : supabase.storage.from("archive").getPublicUrl(a.file).data.publicUrl,
+  }));
   res.json({ manuscripts, archive });
 };
 
