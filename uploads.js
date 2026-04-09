@@ -26,7 +26,7 @@ const storage = new CloudinaryStorage({
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["application/pdf", "application/msword"];
-
+  console.log("mimetype:", file.mimetype);
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
