@@ -25,7 +25,9 @@ module.exports.deletePdf = async (req, res) => {
   res.json({ success: true });
 };
 
-module.exports.getPdfUrl = (filePath) => {
+module.exports.getPdfUrl = (req, res) => {
+  const { filePath } = req.query;
+  if (!filePath) return res.status(400).json({ error: "filePath required" });
   const { data } = supabase.storage.from("archive").getPublicUrl(filePath);
-  return data.publicUrl;
+  res.json({ url: data.publicUrl });
 };
