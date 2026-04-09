@@ -74,7 +74,7 @@ const getManuscript = async (req, res) => {
 const getArchive = async (req, res) => {
   const { name } = req.params;
   const manuscripts = await Accepted.find({ journal: name });
-  const archiveList = await Archive.find({ journal: name });
+  const archiveList = await Archive.find({ journal: name }).lean();
   const archive = archiveList.map((a) => ({
     ...a,
     fileUrl: a.file?.startsWith("http")
