@@ -9,6 +9,6 @@ const {
 
 router.post("/upload", uploadToMemory.single("file"), uploadPdf);
 router.delete("/delete", deletePdf);
-router.get("/url", getPdfUrl);
+router.post("/url", getPdfUrl);
 
 module.exports = router;
