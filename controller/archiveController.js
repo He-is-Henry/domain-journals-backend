@@ -19,15 +19,14 @@ const addNewArchive = async (req, res) => {
 };
 
 const getAllArchives = async (req, res) => {
-  const archiveList = await Archive.find();
+  const archiveList = await Archive.find().lean();
   const result = archiveList.map((a) => ({
-    ...a.file,
+    ...a,
     fileUrl: a.file?.startsWith("http")
       ? a.file
       : supabase.storage.from("archive").getPublicUrl(a.file).data.publicUrl,
   }));
   res.json(result);
-  res.json(archiveList);
 };
 
 const deleteArchive = async (req, res) => {
