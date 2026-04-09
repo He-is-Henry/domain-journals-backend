@@ -1,3 +1,4 @@
+const { supabase } = require("../config/supabase");
 const Archive = require("../model/Archive");
 
 const addNewArchive = async (req, res) => {
@@ -19,6 +20,13 @@ const addNewArchive = async (req, res) => {
 
 const getAllArchives = async (req, res) => {
   const archiveList = await Archive.find();
+  const result = archiveList.map((a) => ({
+    ...a.file,
+    fileUrl: a.file?.startsWith("http")
+      ? a.file
+      : supabase.storage.from("archive").getPublicUrl(a.file).data.publicUrl,
+  }));
+  res.json(result);
   res.json(archiveList);
 };
 
