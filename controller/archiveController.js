@@ -22,4 +22,11 @@ const getAllArchives = async (req, res) => {
   res.json(archiveList);
 };
 
-module.exports = { addNewArchive, getAllArchives };
+const deleteArchive = async (req, res) => {
+  const { id } = req.params;
+  const archive = await Archive.findByIdAndDelete(id);
+  if (!archive) return res.json({ error: "No archive found" });
+  res.json({ message: `Deleted ${id} successfully` });
+};
+
+module.exports = { addNewArchive, getAllArchives, deleteArchive };

@@ -9,4 +9,11 @@ router
   .post(verifyAdminJWT, verifyRoles("admin"), archiveController.addNewArchive)
   .get(archiveController.getAllArchives);
 
+router.delete(
+  "/:id",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  archiveController.deleteArchive,
+);
+
 module.exports = router;

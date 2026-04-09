@@ -32,7 +32,7 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error("Invalid file type. Only .doc, .docx, and .pdf are allowed."),
-      false
+      false,
     );
   }
 };
@@ -56,4 +56,6 @@ const upload = multer({ storage, fileFilter });
 const uploadImage = multer({ storage: imageStorage });
 const uploadReceipt = multer({ storage: receiptStorage });
 
-module.exports = { upload, uploadImage, uploadReceipt };
+const uploadToMemory = multer({ storage: multer.memoryStorage(), fileFilter });
+
+module.exports = { upload, uploadImage, uploadReceipt, uploadToMemory };
