@@ -16,9 +16,12 @@ const downloadFile = async (req, res) => {
       responseType: "arraybuffer",
     });
 
+    const filename = rawFilename.endsWith(".pdf")
+      ? rawFilename
+      : `${rawFilename}.pdf`;
     res.set({
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${rawFilename}.pdf"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     });
 
     return res.send(response.data);
