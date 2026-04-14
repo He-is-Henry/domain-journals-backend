@@ -27,8 +27,12 @@ app.use(logEvents);
 app.get("/", (req, res) => {
   return res.sendFile(indexPath);
 });
-
-
+app.get("/wake", (req, res) => {
+  return res.json({
+    status: "Awake",
+    time: new Date(),
+  });
+});
 
 app.use("/file", require("./routes/file"));
 app.use("/manuscript", require("./routes/manuscript"));
