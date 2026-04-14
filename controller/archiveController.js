@@ -10,7 +10,7 @@ const addNewArchive = async (req, res) => {
     year,
   });
   if (alreadyExistingArchive) await alreadyExistingArchive.deleteOne();
-  await Archive.create({ issue, file, journal });
+  await Archive.create({ issue, file, journal, year });
   const message = alreadyExistingArchive
     ? `Successfully replaced archive in journal ${journal}`
     : `Successfully created archive record for ${journal}`;
