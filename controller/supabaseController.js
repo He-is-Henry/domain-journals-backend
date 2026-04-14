@@ -35,15 +35,27 @@ module.exports.getPdfUrl = async (req, res) => {
   const { filePath } = req.body;
   if (!filePath) return res.status(400).json({ error: "filePath required" });
 
+  const response = handlePdfURL(filePath);
+  res.json(response);
+};
+
+module.exports.wake = async (req, res) => {
+  try {
+    await supabase.storage.from("archive").list("", { limit: 1 });
+    res.json({ success: true, message: "Supabase awake" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+const handlePdfURL = (filePath) => {
   if (Array.isArray(filePath)) {
     const urls = {};
     filePath.forEach((fp) => {
       const { data } = supabase.storage.from("archive").getPublicUrl(fp);
       urls[fp] = data.publicUrl;
     });
-    return res.json({ urls });
+    return { urls };
   }
-
   const { data } = supabase.storage.from("archive").getPublicUrl(filePath);
-  res.json({ url: data.publicUrl });
+  return { url: data.publicUrl };
 };

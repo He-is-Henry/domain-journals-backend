@@ -28,6 +28,8 @@ app.get("/", (req, res) => {
   return res.sendFile(indexPath);
 });
 
+
+
 app.use("/file", require("./routes/file"));
 app.use("/manuscript", require("./routes/manuscript"));
 app.use("/journal", require("./routes/journal"));

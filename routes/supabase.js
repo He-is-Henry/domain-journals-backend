@@ -5,8 +5,10 @@ const {
   uploadPdf,
   deletePdf,
   getPdfUrl,
+  wake,
 } = require("../controller/supabaseController");
 
+router.get("/", wake);
 router.post("/upload", uploadToMemory.single("file"), uploadPdf);
 router.delete("/delete", deletePdf);
 router.post("/url", getPdfUrl);
