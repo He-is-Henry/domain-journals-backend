@@ -14,19 +14,20 @@ router.post(
   "/avatar",
   verifyJWT,
   uploadImage.single("avatar"),
-  fileController.uploadAvatar
+  fileController.uploadAvatar,
 );
 router.post(
   "/receipt",
   verifyJWT,
   uploadReceipt.single("receipt"),
-  fileController.uploadAvatar
+  fileController.uploadAvatar,
 );
+
 router.post(
   "/adminAvatar",
   verifyAdminJWT,
   uploadImage.single("avatar"),
-  fileController.uploadAvatar
+  fileController.uploadAvatar,
 );
 
 module.exports = router;

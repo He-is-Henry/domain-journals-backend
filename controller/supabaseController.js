@@ -1,3 +1,5 @@
+// const { createClient } = require("@supabase/supabase-js/dist/index.cjs");
+const { createClient } = require("@supabase/supabase-js/dist/index.cjs");
 const { supabase } = require("../config/supabase");
 module.exports.uploadPdf = async (req, res) => {
   const file = req.file;
@@ -39,14 +41,32 @@ module.exports.getPdfUrl = async (req, res) => {
   res.json(response);
 };
 
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
+
 module.exports.wake = async (req, res) => {
   try {
-    await supabase.storage.from("archive").list("", { limit: 1 });
-    res.json({ success: true, message: "Supabase awake" });
+    // This completely bypasses the broken anon gateway mappings and ignores all RLS rules
+    const { data, error } = await supabaseAdmin
+      .from("heartbeat")
+      .select("id")
+      .limit(1);
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      message: "Database pinged successfully via admin service layer!",
+      data,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Wake administrative bypass failed:", err.message);
+    return res.status(500).json({ error: err.message });
   }
 };
+
 const handlePdfURL = (filePath) => {
   if (Array.isArray(filePath)) {
     const urls = {};
