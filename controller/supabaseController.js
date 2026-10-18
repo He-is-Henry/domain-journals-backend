@@ -1,6 +1,6 @@
-// const { createClient } = require("@supabase/supabase-js/dist/index.cjs");
 const { createClient } = require("@supabase/supabase-js/dist/index.cjs");
 const { supabase } = require("../config/supabase");
+
 module.exports.uploadPdf = async (req, res) => {
   const file = req.file;
   if (!file) return res.status(400).json({ error: "No file selected" });
@@ -15,10 +15,13 @@ module.exports.uploadPdf = async (req, res) => {
       .upload(fileName, file.buffer, { contentType: file.mimetype });
 
     if (error) throw new Error(error.message);
-    const { data } = supabase.storage.from("archive").getPublicUrl(fileName);
+    const { data } = supabaseAdmin.storage
+      .from("archive")
+      .getPublicUrl(fileName);
     res.json({ url: data.publicUrl, path: fileName });
   } catch (e) {
     console.log(e.message);
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
 
@@ -48,7 +51,6 @@ const supabaseAdmin = createClient(
 
 module.exports.wake = async (req, res) => {
   try {
-    // This completely bypasses the broken anon gateway mappings and ignores all RLS rules
     const { data, error } = await supabaseAdmin
       .from("heartbeat")
       .select("id")

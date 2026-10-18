@@ -82,6 +82,7 @@ const reviseExam = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 const sendExam = async (req, res) => {
   try {
     if (!req.paid) throw new Error("User hasn't paid yet");

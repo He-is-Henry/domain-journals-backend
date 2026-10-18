@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server",
+    "dev": "nodemon --exec \"node --dns-result-order=ipv4first\" server.js",
     "lint": "eslint ./"
   },
   "keywords": [],
@@ -17,6 +17,7 @@
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "docx": "^9.7.1",
     "dotenv": "^16.5.0",
     "eslint": "^9.37.0",
     "express": "^5.1.0",

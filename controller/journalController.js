@@ -11,10 +11,11 @@ const getCurrentIssue = async (req, res) => {
 
 const changeCurrentIssue = async (req, res) => {
   const { name } = req.params;
+  const { issue } = req.body;
   const journal = await Journal.findOne({ name });
   if (!journal) return res.status(404).json({ error: "Invalid journal name" });
   console.log(journal);
-  journal.issue++;
+  journal.issue = issue;
   console.log(journal);
   const result = await journal.save();
   res.json(result);

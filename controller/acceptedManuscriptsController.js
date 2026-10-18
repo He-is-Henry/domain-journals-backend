@@ -34,6 +34,7 @@ const getManuscriptId = async (journal) => {
   const padded = count.toString().padStart(3, "0");
   return `${initials}-${currentYear}-${padded}`;
 };
+
 const getPublishPreview = async (req, res) => {
   try {
     const { journal } = req.params;
@@ -44,16 +45,20 @@ const getPublishPreview = async (req, res) => {
     res.status(500).json({ error: "Failed to generate custom ID" });
   }
 };
+
 const getUserManuscript = async (req, res) => {
   const manuscripts = await Accepted.find({ authorId: req.userId });
   res.json(manuscripts);
 };
+
 const getByIssue = async (req, res) => {
   const { name, issue } = req.params;
   console.log(name, issue);
-  const latestDoc = await Accepted.findOne({ journal: name }).sort({
-    year: -1,
-  });
+  const latestDoc = await Accepted.findOne({ journal: name })
+    .sort({
+      year: -1,
+    })
+    .select("year");
   const latestYear = latestDoc?.year;
 
   const currentIssue = await Accepted.find({
@@ -61,6 +66,7 @@ const getByIssue = async (req, res) => {
     issue,
     year: latestYear,
   });
+
   res.json(currentIssue);
 };
 
@@ -84,55 +90,47 @@ const getArchive = async (req, res) => {
   res.json({ manuscripts, archive });
 };
 
-const publishManuscript = async (req, res) => {
-  const { issue, id, journal } = req.body;
+const createdAcceptedManuscript = async (manuscript, journal, issue) => {
+  const customId = await getManuscriptId(manuscript.journal);
+  const accepted = new Accepted({
+    coAuthors: manuscript.coAuthors,
+    customId,
+    authorId: manuscript.authorId,
+    author: manuscript.author,
+    email: manuscript.email,
+    title: manuscript.title,
+    journal,
+    abstract: manuscript.abstract,
+    file: manuscript.file,
+    country: manuscript.country,
+    paymentReference: manuscript.paymentReference,
+    articleType: manuscript.articleType,
+    issue,
+  });
 
-  try {
-    const manuscript = await Manuscript.findById(id);
-    if (!manuscript)
-      return res.status(404).json({ error: "Manuscript not found" });
-    if (!manuscript.edited)
-      return res
-        .status(409)
-        .json({ error: "Manuscript needs re-upload before publish" });
-    const customId = await getManuscriptId(manuscript.journal);
-    const accepted = new Accepted({
-      coAuthors: manuscript.coAuthors,
-      customId,
-      authorId: manuscript.authorId,
-      author: manuscript.author,
-      email: manuscript.email,
-      title: manuscript.title,
-      journal,
-      abstract: manuscript.abstract,
-      file: manuscript.file,
-      country: manuscript.country,
-      paymentReference: manuscript.paymentReference,
-      articleType: manuscript.articleType,
-      issue,
-    });
+  await manuscript.deleteOne();
+  return await accepted.save();
+};
 
-    await accepted.save();
-    await manuscript.deleteOne();
+const sendAcceptedMail = async (accepted) => {
+  const coAuthors = accepted.coAuthors || [];
 
-    const coAuthors = manuscript.coAuthors || [];
-
-    const generateHtml = (isMainAuthor) => {
-      const ccNotice = isMainAuthor
-        ? ""
-        : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "${
-            manuscript.author
-          }" &lt;${manuscript.email}&gt;<br/>
-  CC: ${manuscript.coAuthors
+  const generateHtml = (isMainAuthor) => {
+    const ccNotice = isMainAuthor
+      ? ""
+      : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "${
+          accepted.author
+        }" &lt;${accepted.email}&gt;<br/>
+  CC: ${accepted.coAuthors
     .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
     .join(", ")}
   </p><br/>`;
 
-      return `
+    return `
         ${ccNotice}
-        <p>Dear ${manuscript.author},</p>
+        <p>Dear ${accepted.author},</p>
         <p>We are pleased to inform you that your manuscript titled:</p>
-        <blockquote>${manuscript.title}</blockquote>
+        <blockquote>${accepted.title}</blockquote>
         <p>has been successfully <strong>published</strong> in the current issue.</p>
 
         <p>You can view your published manuscript here: 
@@ -151,20 +149,41 @@ const publishManuscript = async (req, res) => {
         <br/>
         <p>Regards,<br/>Editorial Board</p>
       `;
-    };
+  };
 
-    await sendMail({
-      to: manuscript.email,
-      subject: `Your manuscript "${manuscript.title}" has been published`,
-      html: generateHtml(true),
-    });
+  await sendMail({
+    to: accepted.email,
+    subject: `Your manuscript "${accepted.title}" has been published`,
+    html: generateHtml(true),
+  });
 
-    await sendMail({
-      to: "ese.anibor.domainjournals.com",
-      bcc: coAuthors,
-      subject: `Your manuscript "${manuscript.title}" has been published`,
-      html: generateHtml(false),
-    });
+  await sendMail({
+    to: "ese.anibor.domainjournals.com",
+    bcc: coAuthors,
+    subject: `Your manuscript "${accepted.title}" has been published`,
+    html: generateHtml(false),
+  });
+};
+
+const publishManuscript = async (req, res) => {
+  const { issue, id, journal } = req.body;
+
+  try {
+    const manuscript = await Manuscript.findById(id);
+    if (!manuscript)
+      return res.status(404).json({ error: "Manuscript not found" });
+    if (!manuscript.edited)
+      return res
+        .status(409)
+        .json({ error: "Manuscript needs re-upload before publish" });
+
+    const accepted = await createdAcceptedManuscript(
+      manuscript,
+      journal,
+      issue,
+    );
+
+    await sendAcceptedMail(accepted);
 
     res.status(201).json({
       message: "Manuscript published and all authors notified.",
@@ -172,6 +191,21 @@ const publishManuscript = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to publish manuscript" });
+  }
+};
+
+const getAllAcceptedManuscripts = async (req, res) => {
+  const { journal } = req.query;
+
+  const query = journal ? { journal } : {};
+
+  try {
+    const manuscripts = await Accepted.find(query);
+    console.log({ manuscripts });
+    res.json(manuscripts);
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ error: "Something went wrong" });
   }
 };
 
@@ -190,12 +224,133 @@ const getRecentManuscripts = async (req, res) => {
   }
 };
 
+const adminUploadManuscript = async (req, res) => {
+  const {
+    author,
+    coAuthors,
+    email,
+    title,
+    journal,
+    year,
+    articleType,
+    abstract,
+    file,
+    country,
+    issue,
+  } = req.body;
+
+  try {
+    const manuscript = await Manuscript.create({
+      author,
+      coAuthors,
+      email,
+      title,
+      journal,
+      year,
+      articleType,
+      abstract,
+      file,
+      country,
+      issue,
+      status: "approved",
+    });
+
+    const accepted = await createdAcceptedManuscript(
+      manuscript,
+      journal,
+      issue,
+    );
+
+    await sendAcceptedMail(accepted);
+
+    res.status(201).json({
+      message: "Manuscript published and all authors notified.",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to publish manuscript" });
+  }
+};
+
+// Update an accepted manuscript
+const updateAcceptedManuscript = async (req, res) => {
+  const { id } = req.params;
+  const {
+    title,
+    author,
+    email,
+    coAuthors,
+    journal,
+    issue,
+    year,
+    articleType,
+    abstract,
+    country,
+    file,
+  } = req.body;
+
+  try {
+    const updated = await Accepted.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          title,
+          author,
+          email,
+          coAuthors,
+          journal,
+          issue,
+          year,
+          articleType,
+          abstract,
+          country,
+          file,
+        },
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: "Accepted manuscript not found" });
+    }
+
+    res.json({
+      message: "Manuscript updated successfully",
+      manuscript: updated,
+    });
+  } catch (err) {
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update manuscript" });
+  }
+};
+
+// Delete an accepted manuscript
+const deleteAcceptedManuscript = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await Accepted.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Accepted manuscript not found" });
+    }
+
+    res.json({ message: "Manuscript deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete manuscript" });
+  }
+};
+
 module.exports = {
   getByIssue,
   getArchive,
   publishManuscript,
   getUserManuscript,
+  getAllAcceptedManuscripts,
   getRecentManuscripts,
   getManuscript,
   getPublishPreview,
+  adminUploadManuscript,
+  updateAcceptedManuscript,
+  deleteAcceptedManuscript,
 };

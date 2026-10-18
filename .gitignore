@@ -4,3 +4,4 @@ logs
 .vscode
 eslint.*
 script.js
+data
