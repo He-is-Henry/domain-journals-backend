@@ -287,9 +287,20 @@ const updateAcceptedManuscript = async (req, res) => {
     abstract,
     country,
     file,
+    customId,
   } = req.body;
 
   try {
+    const idAlreadyExists = await Accepted.exists({
+      customId,
+    });
+
+    if (idAlreadyExists) {
+      return res.status(409).json({
+        error: "Another manuscript has this id, please choose another",
+      });
+    }
+
     const updated = await Accepted.findByIdAndUpdate(
       id,
       {
@@ -305,6 +316,7 @@ const updateAcceptedManuscript = async (req, res) => {
           abstract,
           country,
           file,
+          customId,
         },
       },
       { new: true, runValidators: true },

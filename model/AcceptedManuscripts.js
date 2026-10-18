@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const manuscriptSchema = new Schema({
   author: { type: String, required: true },
-  customId: { type: String, required: true },
+  customId: { type: String, required: true, unique: true },
   coAuthors: [
     {
       name: { type: String, required: true },
