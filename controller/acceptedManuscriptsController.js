@@ -275,50 +275,48 @@ const adminUploadManuscript = async (req, res) => {
 // Update an accepted manuscript
 const updateAcceptedManuscript = async (req, res) => {
   const { id } = req.params;
-  const {
-    title,
-    author,
-    email,
-    coAuthors,
-    journal,
-    issue,
-    year,
-    articleType,
-    abstract,
-    country,
-    file,
-    customId,
-  } = req.body;
+  const { customId } = req.body;
 
   try {
-    const idAlreadyExists = await Accepted.exists({
-      customId,
-    });
-
-    if (idAlreadyExists) {
-      return res.status(409).json({
-        error: "Another manuscript has this id, please choose another",
+    if (customId) {
+      const idAlreadyExists = await Accepted.exists({
+        customId,
+        _id: { $ne: id },
       });
+
+      if (idAlreadyExists) {
+        return res.status(409).json({
+          error:
+            "Another manuscript is already using this ID. Please choose a different one.",
+        });
+      }
     }
+
+    const updateData = {};
+    const allowedFields = [
+      "title",
+      "author",
+      "email",
+      "coAuthors",
+      "journal",
+      "issue",
+      "year",
+      "articleType",
+      "abstract",
+      "country",
+      "file",
+      "customId",
+    ];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
 
     const updated = await Accepted.findByIdAndUpdate(
       id,
-      {
-        $set: {
-          title,
-          author,
-          email,
-          coAuthors,
-          journal,
-          issue,
-          year,
-          articleType,
-          abstract,
-          country,
-          file,
-          customId,
-        },
-      },
+      { $set: updateData },
       { new: true, runValidators: true },
     );
 
