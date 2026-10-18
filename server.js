@@ -12,7 +12,6 @@ const connectDB = require("./config/db");
 const PORT = process.env.PORT || 3500;
 const path = require("path");
 const corsOptions = require("./config/corsOptions");
-const { runExamsScript, runUsersScript } = require("./script");
 
 connectDB();
 app.use("/pay/webhook", express.raw({ type: "application/json" }));
@@ -31,9 +30,6 @@ app.use(errorHandler);
 
 mongoose.connection.once("connected", () => {
   console.log("Connected to MongoDB");
-
-  runExamsScript();
-  runUsersScript();
 
   app.listen(PORT, "0.0.0.0", async () => {
     console.log("Server running on port", PORT);
