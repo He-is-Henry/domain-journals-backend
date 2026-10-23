@@ -46,6 +46,7 @@ const login = async (req, res) => {
   const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
     expiresIn: "365d",
   });
+
   res.cookie("author", token, {
     httpOnly: true,
     maxAge: 60 * 60 * 24 * 365 * 1000,
@@ -68,7 +69,7 @@ const updateAvatar = async (req, res) => {
     const updated = await Author.findByIdAndUpdate(
       authorId,
       { profilePicture: avatarUrl },
-      { new: true }
+      { new: true },
     ).select("name email profilePicture");
     console.log(updated);
 

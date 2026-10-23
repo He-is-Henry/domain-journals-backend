@@ -14,11 +14,19 @@ router
   )
   .get(verifyJWT, acceptedManuscriptsController.getUserManuscript);
 
+router.post(
+  "/admin",
+  verifyAdminJWT,
+  verifyRoles("admin"),
+  acceptedManuscriptsController.adminUploadManuscript,
+);
+
 router.get("/all/", acceptedManuscriptsController.getAllAcceptedManuscripts);
 router.get("/recent/", acceptedManuscriptsController.getRecentManuscripts);
 router.get("/new/:journal", acceptedManuscriptsController.getPublishPreview);
 
 router.get("/view/:id", acceptedManuscriptsController.getManuscript);
+router.get("/slug/:slug", acceptedManuscriptsController.getBySlug);
 router.get("/:name/:issue", acceptedManuscriptsController.getByIssue);
 
 // Edit & Delete accepted manuscript routes
@@ -35,6 +43,6 @@ router
     acceptedManuscriptsController.deleteAcceptedManuscript,
   );
 
-router.route("/:name").get(acceptedManuscriptsController.getArchive);
+router.get("/:name", acceptedManuscriptsController.getArchive);
 
 module.exports = router;

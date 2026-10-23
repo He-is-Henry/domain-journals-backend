@@ -4,46 +4,32 @@ const Archive = require("../model/Archive");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
-function getInitials(slug) {
-  return slug
-    .split("-")
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
-}
-
-const getManuscriptId = async (journal) => {
-  const currentYear = new Date().getFullYear();
-  const initials = getInitials(journal);
-
-  const latest = await Accepted.findOne({ journal }).sort({ _id: -1 });
-
-  let count = 1;
-
-  if (latest?.customId) {
-    const parts = latest.customId.split("-");
-    if (
-      parts.length === 3 &&
-      parts[0] === initials &&
-      +parts[1] === currentYear
-    ) {
-      count = parseInt(parts[2], 10) + 1;
-    }
-  }
-
-  const padded = count.toString().padStart(3, "0");
-  return `${initials}-${currentYear}-${padded}`;
+const getManuscript = async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "Id is required" });
+  const manuscript = await Accepted.findById(id);
+  if (!manuscript) return res.json(404).json({ error: "Manuscript not found" });
+  res.json(manuscript);
 };
 
-const getPublishPreview = async (req, res) => {
-  try {
-    const { journal } = req.params;
-    const id = await getManuscriptId(journal);
-    res.json(id);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to generate custom ID" });
-  }
+const getBySlug = async (req, res) => {
+  const { slug } = req.params;
+
+  if (!slug)
+    return res.status(400).json({
+      error: "Slug is required",
+    });
+
+  const manuscript = await Accepted.findOne({
+    slug,
+  });
+
+  if (!manuscript)
+    return res.status(404).json({
+      error: "Invalid manuscript slug",
+    });
+
+  res.json(manuscript);
 };
 
 const getUserManuscript = async (req, res) => {
@@ -70,108 +56,25 @@ const getByIssue = async (req, res) => {
   res.json(currentIssue);
 };
 
-const getManuscript = async (req, res) => {
-  const { id } = req.params;
-  if (!id) return res.status(400).json({ error: "Id is required" });
-  const manuscript = await Accepted.findById(id);
-  if (!manuscript) return res.json(404).json({ error: "Manuscript not found" });
-  res.json(manuscript);
-};
-const getArchive = async (req, res) => {
-  const { name } = req.params;
-  const manuscripts = await Accepted.find({ journal: name });
-  const archiveList = await Archive.find({ journal: name }).lean();
-  const archive = archiveList.map((a) => ({
-    ...a,
-    fileUrl: a.file?.startsWith("http")
-      ? a.file
-      : supabase.storage.from("archive").getPublicUrl(a.file).data.publicUrl,
-  }));
-  res.json({ manuscripts, archive });
-};
-
-const createdAcceptedManuscript = async (manuscript, journal, issue) => {
-  const customId = await getManuscriptId(manuscript.journal);
-  const accepted = new Accepted({
-    coAuthors: manuscript.coAuthors,
-    customId,
-    authorId: manuscript.authorId,
-    author: manuscript.author,
-    email: manuscript.email,
-    title: manuscript.title,
-    journal,
-    abstract: manuscript.abstract,
-    file: manuscript.file,
-    country: manuscript.country,
-    paymentReference: manuscript.paymentReference,
-    articleType: manuscript.articleType,
-    issue,
-  });
-
-  await manuscript.deleteOne();
-  return await accepted.save();
-};
-
-const sendAcceptedMail = async (accepted) => {
-  const coAuthors = accepted.coAuthors || [];
-
-  const generateHtml = (isMainAuthor) => {
-    const ccNotice = isMainAuthor
-      ? ""
-      : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "${
-          accepted.author
-        }" &lt;${accepted.email}&gt;<br/>
-  CC: ${accepted.coAuthors
-    .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
-    .join(", ")}
-  </p><br/>`;
-
-    return `
-        ${ccNotice}
-        <p>Dear ${accepted.author},</p>
-        <p>We are pleased to inform you that your manuscript titled:</p>
-        <blockquote>${accepted.title}</blockquote>
-        <p>has been successfully <strong>published</strong> in the current issue.</p>
-
-        <p>You can view your published manuscript here: 
-          <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
-            ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
-          </a>
-        </p>
-
-        <p>We’d love to hear your feedback. Kindly take a moment to share your experience with us:</p>
-        <p>
-          <a href="${process.env.FRONTEND_URL}/review" target="_blank" style="color: #2e7d32;">
-            Submit a Review
-          </a>
-        </p>
-
-        <br/>
-        <p>Regards,<br/>Editorial Board</p>
-      `;
-  };
-
-  await sendMail({
-    to: accepted.email,
-    subject: `Your manuscript "${accepted.title}" has been published`,
-    html: generateHtml(true),
-  });
-
-  await sendMail({
-    to: "ese.anibor.domainjournals.com",
-    bcc: coAuthors,
-    subject: `Your manuscript "${accepted.title}" has been published`,
-    html: generateHtml(false),
-  });
+const getPublishPreview = async (req, res) => {
+  try {
+    const { journal } = req.params;
+    const id = await getManuscriptId(journal);
+    res.json(id);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to generate custom ID" });
+  }
 };
 
 const publishManuscript = async (req, res) => {
-  const { issue, id, journal } = req.body;
+  const { issue, id, journal, slug } = req.body;
 
   try {
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
+
     if (!manuscript.edited)
       return res
         .status(409)
@@ -181,6 +84,7 @@ const publishManuscript = async (req, res) => {
       manuscript,
       journal,
       issue,
+      slug,
     );
 
     await sendAcceptedMail(accepted);
@@ -201,7 +105,6 @@ const getAllAcceptedManuscripts = async (req, res) => {
 
   try {
     const manuscripts = await Accepted.find(query);
-    console.log({ manuscripts });
     res.json(manuscripts);
   } catch (e) {
     console.log(e);
@@ -222,6 +125,21 @@ const getRecentManuscripts = async (req, res) => {
     console.log(error);
     res.status(500).json({ error: "Something went wrong" });
   }
+};
+
+const getArchive = async (req, res) => {
+  const { name } = req.params;
+  const manuscripts = await Accepted.find({ journal: name });
+  const archiveList = await Archive.find({ journal: name }).lean();
+
+  const archive = archiveList.map((a) => ({
+    ...a,
+    fileUrl: a.file?.startsWith("http")
+      ? a.file
+      : supabase.storage.from("archive").getPublicUrl(a.file).data.publicUrl,
+  }));
+
+  res.json({ manuscripts, archive });
 };
 
 const adminUploadManuscript = async (req, res) => {
@@ -275,7 +193,7 @@ const adminUploadManuscript = async (req, res) => {
 // Update an accepted manuscript
 const updateAcceptedManuscript = async (req, res) => {
   const { id } = req.params;
-  const { customId } = req.body;
+  const { customId, slug } = req.body;
 
   try {
     if (customId) {
@@ -283,11 +201,22 @@ const updateAcceptedManuscript = async (req, res) => {
         customId,
         _id: { $ne: id },
       });
+      const slugAlreadyExists = await Accepted.exists({
+        slug,
+        _id: { $ne: id },
+      });
 
       if (idAlreadyExists) {
         return res.status(409).json({
           error:
             "Another manuscript is already using this ID. Please choose a different one.",
+        });
+      }
+
+      if (slugAlreadyExists) {
+        return res.status(409).json({
+          error:
+            "Another manuscript is already using this slug. Please choose a different one.",
         });
       }
     }
@@ -306,6 +235,7 @@ const updateAcceptedManuscript = async (req, res) => {
       "country",
       "file",
       "customId",
+      "slug",
     ];
 
     allowedFields.forEach((field) => {
@@ -351,9 +281,118 @@ const deleteAcceptedManuscript = async (req, res) => {
   }
 };
 
+// utils
+
+const createdAcceptedManuscript = async (manuscript, journal, issue, slug) => {
+  const customId = await getManuscriptId(manuscript.journal);
+  const accepted = new Accepted({
+    coAuthors: manuscript.coAuthors,
+    customId,
+    authorId: manuscript.authorId,
+    author: manuscript.author,
+    email: manuscript.email,
+    title: manuscript.title,
+    journal,
+    abstract: manuscript.abstract,
+    file: manuscript.file,
+    country: manuscript.country,
+    paymentReference: manuscript.paymentReference,
+    articleType: manuscript.articleType,
+    issue,
+    slug,
+  });
+
+  await manuscript.deleteOne();
+  return await accepted.save();
+};
+const sendAcceptedMail = async (accepted) => {
+  const coAuthors = accepted.coAuthors || [];
+
+  const generateHtml = (isMainAuthor) => {
+    const ccNotice = isMainAuthor
+      ? ""
+      : `<p>You are being carbon copied ("cc:'d") on an e-mail "To" "${
+          accepted.author
+        }" &lt;${accepted.email}&gt;<br/>
+  CC: ${accepted.coAuthors
+    .map((c) => (c.name ? `"${c.name}" ` : "") + c.email)
+    .join(", ")}
+  </p><br/>`;
+
+    return `
+        ${ccNotice}
+        <p>Dear ${accepted.author},</p>
+        <p>We are pleased to inform you that your manuscript titled:</p>
+        <blockquote>${accepted.title}</blockquote>
+        <p>has been successfully <strong>published</strong> in the current issue.</p>
+
+        <p>You can view your published manuscript here: 
+          <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
+            ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
+          </a>
+        </p>
+
+        <p>We’d love to hear your feedback. Kindly take a moment to share your experience with us:</p>
+        <p>
+          <a href="${process.env.FRONTEND_URL}/review" target="_blank" style="color: #2e7d32;">
+            Submit a Review
+          </a>
+        </p>
+
+        <br/>
+        <p>Regards,<br/>Editorial Board</p>
+      `;
+  };
+
+  await sendMail({
+    to: accepted.email,
+    subject: `Your manuscript "${accepted.title}" has been published`,
+    html: generateHtml(true),
+  });
+
+  await sendMail({
+    to: "ese.anibor.domainjournals.com",
+    bcc: coAuthors,
+    subject: `Your manuscript "${accepted.title}" has been published`,
+    html: generateHtml(false),
+  });
+};
+
+function getInitials(slug) {
+  return slug
+    .split("-")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+const getManuscriptId = async (journal) => {
+  const currentYear = new Date().getFullYear();
+  const initials = getInitials(journal);
+
+  const latest = await Accepted.findOne({ journal }).sort({ _id: -1 });
+
+  let count = 1;
+
+  if (latest?.customId) {
+    const parts = latest.customId.split("-");
+    if (
+      parts.length === 3 &&
+      parts[0] === initials &&
+      +parts[1] === currentYear
+    ) {
+      count = parseInt(parts[2], 10) + 1;
+    }
+  }
+
+  const padded = count.toString().padStart(3, "0");
+  return `${initials}-${currentYear}-${padded}`;
+};
+
 module.exports = {
   getByIssue,
   getArchive,
+  getBySlug,
   publishManuscript,
   getUserManuscript,
   getAllAcceptedManuscripts,
