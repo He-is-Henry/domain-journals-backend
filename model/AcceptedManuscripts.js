@@ -1,41 +1,46 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const manuscriptSchema = new Schema({
-  author: { type: String, required: true },
-  customId: { type: String, required: true, unique: true },
-  coAuthors: [
-    {
-      name: { type: String, required: true },
-      email: { type: String, required: true },
-    },
-  ],
-  authorId: { type: String, required: true },
-  email: { type: String, required: true },
-  title: { type: String, required: true },
-  slug: { type: String, required: true, unique: true },
-  journal: {
-    type: String,
-    required: true,
-    enum: [
-      "domain-health-journal",
-      "domain-journal-of-science-and-technology",
-      "domain-multidisciplinary-journal",
-      "domain-journal-of-biological-sciences",
+const manuscriptSchema = new Schema(
+  {
+    author: { type: String, required: true },
+    customId: { type: String, required: true, unique: true },
+    coAuthors: [
+      {
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+      },
     ],
+    authorId: { type: String, required: true },
+    email: { type: String, required: true },
+    title: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    journal: {
+      type: String,
+      required: true,
+      enum: [
+        "domain-health-journal",
+        "domain-journal-of-science-and-technology",
+        "domain-multidisciplinary-journal",
+        "domain-journal-of-biological-sciences",
+      ],
+    },
+    year: {
+      type: Number,
+      required: true,
+      default: new Date().getFullYear(),
+    },
+    articleType: { type: String, required: true },
+    abstract: { type: String, required: true },
+    file: { type: String, required: true },
+    country: { type: String, required: true },
+    issue: { type: Number, required: true },
+    paymentReference: String,
   },
-  year: {
-    type: Number,
-    required: true,
-    default: new Date().getFullYear(),
+  {
+    timestamps: true,
   },
-  articleType: { type: String, required: true },
-  abstract: { type: String, required: true },
-  file: { type: String, required: true },
-  country: { type: String, required: true },
-  issue: { type: Number, required: true },
-  paymentReference: String,
-});
+);
 
 module.exports.Accepted = mongoose.model(
   "AcceptedManuscript",

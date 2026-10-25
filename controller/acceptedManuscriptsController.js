@@ -33,7 +33,9 @@ const getBySlug = async (req, res) => {
 };
 
 const getUserManuscript = async (req, res) => {
-  const manuscripts = await Accepted.find({ authorId: req.userId });
+  const manuscripts = await Accepted.find({ authorId: req.userId }).sort({
+    createdAt: -1,
+  });
   res.json(manuscripts);
 };
 
@@ -68,9 +70,21 @@ const getPublishPreview = async (req, res) => {
 };
 
 const publishManuscript = async (req, res) => {
-  const { issue, id, journal, slug } = req.body;
+  let { issue, id, journal, slug } = req.body;
 
   try {
+    if (slug) {
+      slug = sanitizeSlug(slug);
+      const slugAlreadyExists = await Accepted.exists({
+        slug,
+        _id: { $ne: id },
+      });
+      if (slugAlreadyExists) {
+        return res.status(409).json({
+          error: "Another manuscript is already using this slug.",
+        });
+      }
+    }
     const manuscript = await Manuscript.findById(id);
     if (!manuscript)
       return res.status(404).json({ error: "Manuscript not found" });
@@ -118,7 +132,7 @@ const getRecentManuscripts = async (req, res) => {
     const query = journal ? { journal } : {};
     console.log(journal ? { journal } : {});
     const recentManuscripts = await Accepted.find(query)
-      .sort({ _id: -1 })
+      .sort({ createdAt: -1 })
       .limit(3);
     res.json(recentManuscripts);
   } catch (error) {
@@ -193,7 +207,7 @@ const adminUploadManuscript = async (req, res) => {
 // Update an accepted manuscript
 const updateAcceptedManuscript = async (req, res) => {
   const { id } = req.params;
-  const { customId, slug } = req.body;
+  let { customId, slug } = req.body;
 
   try {
     if (customId) {
@@ -201,22 +215,23 @@ const updateAcceptedManuscript = async (req, res) => {
         customId,
         _id: { $ne: id },
       });
-      const slugAlreadyExists = await Accepted.exists({
-        slug,
-        _id: { $ne: id },
-      });
-
       if (idAlreadyExists) {
         return res.status(409).json({
           error:
             "Another manuscript is already using this ID. Please choose a different one.",
         });
       }
+    }
 
+    if (slug) {
+      slug = sanitizeSlug(slug);
+      const slugAlreadyExists = await Accepted.exists({
+        slug,
+        _id: { $ne: id },
+      });
       if (slugAlreadyExists) {
         return res.status(409).json({
-          error:
-            "Another manuscript is already using this slug. Please choose a different one.",
+          error: "Another manuscript is already using this slug.",
         });
       }
     }
@@ -286,6 +301,7 @@ const deleteAcceptedManuscript = async (req, res) => {
 const createdAcceptedManuscript = async (manuscript, journal, issue, slug) => {
   const customId = await getManuscriptId(manuscript.journal);
   const accepted = new Accepted({
+    _id: manuscript._id,
     coAuthors: manuscript.coAuthors,
     customId,
     authorId: manuscript.authorId,
@@ -305,6 +321,7 @@ const createdAcceptedManuscript = async (manuscript, journal, issue, slug) => {
   await manuscript.deleteOne();
   return await accepted.save();
 };
+
 const sendAcceptedMail = async (accepted) => {
   const coAuthors = accepted.coAuthors || [];
 
@@ -326,9 +343,9 @@ const sendAcceptedMail = async (accepted) => {
         <blockquote>${accepted.title}</blockquote>
         <p>has been successfully <strong>published</strong> in the current issue.</p>
 
-        <p>You can view your published manuscript here: 
-          <a href="${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue" target="_blank">
-            ${process.env.FRONTEND_URL}/journals/${accepted.journal}/current-issue
+        <p>You can view your published article here: 
+          <a href="${process.env.FRONTEND_URL}/articles/${accepted.slug}" target="_blank">
+            ${process.env.FRONTEND_URL}/articles/${accepted.slug}
           </a>
         </p>
 
@@ -350,12 +367,27 @@ const sendAcceptedMail = async (accepted) => {
     html: generateHtml(true),
   });
 
-  await sendMail({
-    to: "ese.anibor.domainjournals.com",
-    bcc: coAuthors,
-    subject: `Your manuscript "${accepted.title}" has been published`,
-    html: generateHtml(false),
-  });
+  if (coAuthors.length > 0) {
+    await sendMail({
+      to: "ese.anibor.domainjournals.com",
+      bcc: coAuthors.map((c) => c.email),
+      subject: `Your manuscript "${accepted.title}" has been published`,
+      html: generateHtml(false),
+    });
+  }
+};
+
+const sanitizeSlug = (str) => {
+  if (!str) return "";
+  return str
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents/diacritics
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove invalid characters (keep only alphanumeric, space, hyphen)
+    .replace(/[\s_-]+/g, "-") // Replace spaces/underscores with single hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading/trailing hyphens
 };
 
 function getInitials(slug) {
@@ -369,24 +401,30 @@ function getInitials(slug) {
 const getManuscriptId = async (journal) => {
   const currentYear = new Date().getFullYear();
   const initials = getInitials(journal);
+  const prefix = `${initials}-${currentYear}-`;
 
-  const latest = await Accepted.findOne({ journal }).sort({ _id: -1 });
+  const docs = await Accepted.find({
+    journal,
+    customId: { $regex: `^${prefix}` },
+  }).select("customId");
 
-  let count = 1;
+  let maxCount = 0;
 
-  if (latest?.customId) {
-    const parts = latest.customId.split("-");
-    if (
-      parts.length === 3 &&
-      parts[0] === initials &&
-      +parts[1] === currentYear
-    ) {
-      count = parseInt(parts[2], 10) + 1;
+  docs.forEach((doc) => {
+    if (doc.customId) {
+      const parts = doc.customId.split("-");
+      if (parts.length === 3) {
+        const num = parseInt(parts[2], 10);
+        if (!isNaN(num) && num > maxCount) {
+          maxCount = num;
+        }
+      }
     }
-  }
+  });
 
-  const padded = count.toString().padStart(3, "0");
-  return `${initials}-${currentYear}-${padded}`;
+  const nextCount = maxCount + 1;
+  const padded = nextCount.toString().padStart(3, "0");
+  return `${prefix}${padded}`;
 };
 
 module.exports = {
