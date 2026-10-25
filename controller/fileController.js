@@ -46,7 +46,8 @@ const uploadFile = (req, res) => {
     return res.status(500).json({ error: "Failed to upload file" });
   }
 };
-const uploadAvatar = (req, res) => {
+
+const uploadImage = (req, res) => {
   try {
     console.log("Trying to upload file");
     if (!req.file) {
@@ -64,6 +65,6 @@ const uploadAvatar = (req, res) => {
 
 module.exports = {
   uploadFile,
-  uploadAvatar,
+  uploadImage,
   downloadFile,
 };

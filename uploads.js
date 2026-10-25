@@ -56,10 +56,25 @@ const receiptStorage = new CloudinaryStorage({
   },
 });
 
+const figureStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "figure",
+    resource_type: "image",
+  },
+});
+
 const upload = multer({ storage, fileFilter });
 const uploadImage = multer({ storage: imageStorage });
 const uploadReceipt = multer({ storage: receiptStorage });
+const uploadFigure = multer({ storage: figureStorage });
 
 const uploadToMemory = multer({ storage: multer.memoryStorage(), fileFilter });
 
-module.exports = { upload, uploadImage, uploadReceipt, uploadToMemory };
+module.exports = {
+  upload,
+  uploadImage,
+  uploadReceipt,
+  uploadToMemory,
+  uploadFigure,
+};

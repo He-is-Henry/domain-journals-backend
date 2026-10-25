@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { upload, uploadImage, uploadReceipt } = require("../uploads");
+const {
+  upload,
+  uploadImage,
+  uploadReceipt,
+  uploadFigure,
+} = require("../uploads");
 const fileController = require("../controller/fileController");
 const verifyJWT = require("../middleware/verifyJWT");
 const verifyAdminJWT = require("../middleware/verifyAdminJWT");
@@ -14,20 +19,28 @@ router.post(
   "/avatar",
   verifyJWT,
   uploadImage.single("avatar"),
-  fileController.uploadAvatar,
+  fileController.uploadImage,
 );
+
 router.post(
   "/receipt",
   verifyJWT,
   uploadReceipt.single("receipt"),
-  fileController.uploadAvatar,
+  fileController.uploadImage,
+);
+
+router.post(
+  "/figure",
+  verifyAdminJWT,
+  uploadFigure.single("figure"),
+  fileController.uploadImage,
 );
 
 router.post(
   "/adminAvatar",
   verifyAdminJWT,
   uploadImage.single("avatar"),
-  fileController.uploadAvatar,
+  fileController.uploadImage,
 );
 
 module.exports = router;

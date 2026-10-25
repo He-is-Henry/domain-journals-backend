@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const manuscriptSchema = new Schema(
+const AcceptedManuscriptSchema = new Schema(
   {
     author: { type: String, required: true },
     customId: { type: String, required: true, unique: true },
@@ -36,6 +36,7 @@ const manuscriptSchema = new Schema(
     country: { type: String, required: true },
     issue: { type: Number, required: true },
     paymentReference: String,
+    content: { type: String, default: "" },
   },
   {
     timestamps: true,
@@ -44,5 +45,5 @@ const manuscriptSchema = new Schema(
 
 module.exports.Accepted = mongoose.model(
   "AcceptedManuscript",
-  manuscriptSchema,
+  AcceptedManuscriptSchema,
 );

@@ -70,7 +70,7 @@ const getPublishPreview = async (req, res) => {
 };
 
 const publishManuscript = async (req, res) => {
-  let { issue, id, journal, slug } = req.body;
+  let { issue, id, journal, slug, content } = req.body;
 
   try {
     if (slug) {
@@ -99,6 +99,7 @@ const publishManuscript = async (req, res) => {
       journal,
       issue,
       slug,
+      content,
     );
 
     await sendAcceptedMail(accepted);
@@ -118,7 +119,7 @@ const getAllAcceptedManuscripts = async (req, res) => {
   const query = journal ? { journal } : {};
 
   try {
-    const manuscripts = await Accepted.find(query);
+    const manuscripts = await Accepted.find(query).sort({ createdAt: -1 });
     res.json(manuscripts);
   } catch (e) {
     console.log(e);
@@ -251,11 +252,13 @@ const updateAcceptedManuscript = async (req, res) => {
       "file",
       "customId",
       "slug",
+      "content",
     ];
 
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
+        updateData[field] = updateData[field] =
+          field === "slug" ? slug : req.body[field];
       }
     });
 
@@ -298,7 +301,13 @@ const deleteAcceptedManuscript = async (req, res) => {
 
 // utils
 
-const createdAcceptedManuscript = async (manuscript, journal, issue, slug) => {
+const createdAcceptedManuscript = async (
+  manuscript,
+  journal,
+  issue,
+  slug,
+  content,
+) => {
   const customId = await getManuscriptId(manuscript.journal);
   const accepted = new Accepted({
     _id: manuscript._id,
@@ -316,6 +325,7 @@ const createdAcceptedManuscript = async (manuscript, journal, issue, slug) => {
     articleType: manuscript.articleType,
     issue,
     slug,
+    content,
   });
 
   await manuscript.deleteOne();
