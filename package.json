@@ -4,6 +4,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon --exec \"node --dns-result-order=ipv4first\" server.js",
+    "cleanup:cloudinary": "node --dns-result-order=ipv4first scripts/cleanupCloudinary.js",
     "lint": "eslint ./"
   },
   "keywords": [],
