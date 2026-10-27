@@ -5,3 +5,5 @@ logs
 eslint.*
 script.js
 data
+
+cloudinary-cleanup**

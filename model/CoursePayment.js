@@ -17,7 +17,7 @@ const coursePaymentSchema = new schema(
     accountName: String,
     confirmed: { type: Boolean, required: true, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Coursepayment", coursePaymentSchema);

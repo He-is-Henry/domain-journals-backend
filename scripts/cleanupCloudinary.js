@@ -1,7 +1,8 @@
 /**
  * Usage (from the backend root):
- *   node scripts/cleanupCloudinary.js                       dry run: lists what WOULD be deleted
- *   node scripts/cleanupCloudinary.js --delete              really delete
+ *   npm run cleanup:cloudinary                        dry run: lists what WOULD be deleted
+ *   npm run cleanup:cloudinary -- --delete            really delete
+ *   npm run cleanup:cloudinary -- --delete --force    also delete when the "more than half" guard trips
  *
  * Options:
  *   --min-age-hours=72      never touch assets newer than this (default 72)
@@ -9,9 +10,8 @@
  *   --collections=a,b       only scan these collections for references
  *   --force                 allow deleting more than half of a folder
  *
- * Add to package.json:  "cleanup:cloudinary": "node scripts/cleanupCloudinary.js"
+ * A JSON report is ALWAYS written to the current folder (also for dry runs and blocked runs).
  */
-
 require("node:dns/promises").setServers(["1.1.1.1", "8.8.8.8"]);
 
 try {
@@ -21,6 +21,7 @@ try {
 }
 const fs = require("fs");
 const path = require("path");
+const readline = require("readline");
 const mongoose = require("mongoose");
 const { runCleanup } = require("../services/cloudinaryCleanup");
 
@@ -38,7 +39,21 @@ const list = (v) =>
         .filter(Boolean)
     : null;
 
-const uri = process.env.DATABASE_URI;
+const uri =
+  process.env.DATABASE_URI || process.env.MONGO_URI || process.env.MONGODB_URI;
+
+const askQuestion = (query) => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans.trim().toLowerCase());
+    }),
+  );
+};
 
 (async () => {
   if (!uri)
@@ -47,32 +62,57 @@ const uri = process.env.DATABASE_URI;
     );
   await mongoose.connect(uri);
 
-  const report = await runCleanup({
+  const cleanupOptions = {
     dryRun: !args.delete,
     minAgeHours: Number(args["min-age-hours"]) || 72,
     protect: list(args.protect) || [],
     collections: list(args.collections),
     force: !!args.force,
-  });
+  };
 
-  const file = path.join(
-    process.cwd(),
+  let report = await runCleanup(cleanupOptions);
+
+  const file = path.resolve(
     `cloudinary-cleanup-${new Date().toISOString().replace(/[:.]/g, "-")}.json`,
   );
   fs.writeFileSync(file, JSON.stringify(report, null, 2));
 
-  const bytes = report.folders.reduce(
-    (n, f) => n + f.orphans.reduce((m, o) => m + o.bytes, 0),
-    0,
-  );
-  const count = report.folders.reduce((n, f) => n + f.orphans.length, 0);
+  const orphans = report.folders.flatMap((f) => f.orphans);
+  const bytes = orphans.reduce((n, o) => n + o.bytes, 0);
   console.log(
-    `\n${count} orphaned asset(s), ${(bytes / 1024 / 1024).toFixed(1)} MB. Report: ${file}`,
+    `\n${orphans.length} orphaned asset(s), ${(bytes / 1024 / 1024).toFixed(1)} MB.`,
   );
-  if (report.dryRun)
+  console.log(`Report written to: ${file}`);
+
+  if (report.blocked.length && !args.force) {
     console.log(
-      "DRY RUN: nothing was deleted. Review the report, then re-run with --delete.",
+      "\nGuard tripped, so nothing is deleted. Review the report, then add --force if it is correct.",
     );
+    if (!report.dryRun) process.exitCode = 2;
+  } else if (report.dryRun) {
+    if (orphans.length > 0 && process.stdin.isTTY) {
+      console.log("\n--------------------------------------------------");
+      const answer = await askQuestion(
+        `Would you like to PERMANENTLY delete these ${orphans.length} orphaned asset(s) now? (y/N): `,
+      );
+      if (answer === "y" || answer === "yes") {
+        console.log("\nExecuting deletion phase...");
+        report = await runCleanup({
+          ...cleanupOptions,
+          dryRun: false,
+        });
+        console.log("\nDeletion completed successfully.");
+      } else {
+        console.log(
+          "\nDRY RUN complete: nothing was deleted. Re-run with --delete to remove the orphans listed above.",
+        );
+      }
+    } else {
+      console.log(
+        "\nDRY RUN: nothing was deleted. Re-run with --delete to remove the orphans listed above.",
+      );
+    }
+  }
 })()
   .catch((err) => {
     console.error("Cleanup failed:", err.message);
