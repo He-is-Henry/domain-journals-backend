@@ -108,7 +108,7 @@ const handleResetMail = async (req, res) => {
     const resetKey = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = Date.now() + 24 * 60 * 60 * 1000;
 
-    author.resetKey = resetKey;
+    author.resetKey = bcrypt.hash(resetKey);
     author.resetKeyExpires = expiry;
     await author.save();
     const from = `"Domain Journals" <no-reply@domainjournals.com>`;
@@ -164,7 +164,9 @@ const handleVerifyKey = async (req, res) => {
 
     const now = Date.now();
 
-    if (author.resetKey !== resetKey) {
+    const match = await bcrypt.compare(resetKey, author.resetKey);
+
+    if (!match) {
       return res.status(401).json({ error: "Invalid reset key" });
     }
 
@@ -223,7 +225,9 @@ const handleResetPassword = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   const userId = req.userId;
-  const author = await Author.findById(userId).select("-password");
+  const author = await Author.findById(userId).select(
+    "-password -resetKey -resetKeyExpires",
+  );
   res.status(200).json(author);
 };
 

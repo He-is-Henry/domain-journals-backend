@@ -43,7 +43,7 @@ const handleInvite = async (req, res) => {
       JWT_SECRET,
       {
         expiresIn: "2d",
-      }
+      },
     );
 
     const link = `${process.env.FRONTEND_URL}/invite/${inviteToken}`;
@@ -117,7 +117,7 @@ const login = async (req, res) => {
         },
       },
       process.env.JWT_SECRET,
-      { expiresIn: "365d" }
+      { expiresIn: "365d" },
     );
 
     res
@@ -159,7 +159,7 @@ const updateAvatar = async (req, res) => {
     const updated = await User.findByIdAndUpdate(
       userId,
       { profilePicture: avatarUrl },
-      { new: true }
+      { new: true },
     ).select("name email profilePicture ");
     console.log(updated);
 
@@ -176,7 +176,9 @@ const updateAvatar = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   const userId = req.userId;
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(userId).select(
+    "-password -resetKey -resetKeyExpires",
+  );
   res.status(200).json(user);
 };
 
@@ -283,7 +285,7 @@ const sendResetKey = async (req, res) => {
     const resetKey = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = Date.now() + 24 * 60 * 60 * 1000;
 
-    user.resetKey = resetKey;
+    user.resetKey = bcrypt.hash(resetKey);
     user.resetKeyExpires = expiry;
     await user.save();
     const from = `"Domain Journals" <no-reply@domainjournals.com>`;
@@ -319,6 +321,7 @@ const sendResetKey = async (req, res) => {
     res.status(500).json({ error: "Could not send reset mail" });
   }
 };
+
 const verifyResetKey = async (req, res) => {
   const { id, resetKey } = req.body;
 
@@ -338,7 +341,9 @@ const verifyResetKey = async (req, res) => {
 
     const now = Date.now();
 
-    if (user.resetKey !== resetKey) {
+    const match = await bcrypt.compare(resetKey, user.resetKey);
+
+    if (!match) {
       return res.status(401).json({ error: "Invalid reset key" });
     }
 
@@ -394,6 +399,7 @@ const handleResetPassword = async (req, res) => {
     res.status(500).json({ error: "Could not reset password" });
   }
 };
+
 const logout = (req, res) => {
   res
     .clearCookie("admin", {
@@ -423,7 +429,7 @@ const resetAuthorPassword = async (req, res) => {
         id: author._id,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     author.adminReset = true;
