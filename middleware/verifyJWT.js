@@ -3,10 +3,13 @@ const Author = require("../model/Author");
 
 const verifyAuthorJWT = async (req, res, next) => {
   try {
-    const token = req.cookies?.author;
+    const token = req.cookies?.author_access;
 
     if (!token) {
-      return res.status(401).json({ error: "Token not found" });
+      return res.status(401).json({
+        error: "Access token missing",
+        code: "AUTHOR_TOKEN_EXPIRED",
+      });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -23,7 +26,13 @@ const verifyAuthorJWT = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.log("JWT verification error:", error);
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        error: "Access token expired",
+        code: "AUTHOR_TOKEN_EXPIRED",
+      });
+    }
+    console.error("JWT verification error:", error);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };

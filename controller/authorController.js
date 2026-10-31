@@ -1,8 +1,42 @@
 const jwt = require("jsonwebtoken");
 const Author = require("../model/Author");
-const JWT_SECRET = process.env.JWT_SECRET;
 const bcrypt = require("bcrypt");
 const sendMail = require("../uttils/sendMail");
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+
+const cookieBaseOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+};
+
+// Helper function to issue token pair
+const issueTokens = (res, authorId) => {
+  const accessToken = jwt.sign({ userData: { id: authorId } }, JWT_SECRET, {
+    expiresIn: "15m",
+  });
+
+  const refreshToken = jwt.sign(
+    { userData: { id: authorId } },
+    JWT_REFRESH_SECRET,
+    { expiresIn: "30d" },
+  );
+
+  res.cookie("author_access", accessToken, {
+    ...cookieBaseOptions,
+    maxAge: 15 * 60 * 1000, // 15 minutes
+  });
+
+  res.cookie("author_refresh", refreshToken, {
+    ...cookieBaseOptions,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+
+  return { accessToken, refreshToken };
+};
 
 const signup = async (req, res) => {
   try {
@@ -20,40 +54,62 @@ const signup = async (req, res) => {
       department,
       level,
     });
-    const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
-      expiresIn: "365d",
-    });
-    res.cookie("author", token, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 365 * 1000,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    });
+
+    issueTokens(res, author._id);
+
     res.status(200).json({ author: { id: author._id, name: author.name } });
   } catch (error) {
-    console.log(error);
+    console.error("Signup error:", error);
+    res.status(500).json({ error: "Signup failed" });
   }
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-  const author = await Author.findOne({ email });
-  if (!author) return res.status(400).json({ error: "User doesn't exist" });
+  try {
+    const { email, password } = req.body;
+    const author = await Author.findOne({ email });
+    if (!author) return res.status(400).json({ error: "User doesn't exist" });
 
-  const match = await bcrypt.compare(password, author.password);
-  if (!match) return res.status(400).json({ error: "Incorrect password" });
+    const match = await bcrypt.compare(password, author.password);
+    if (!match) return res.status(400).json({ error: "Incorrect password" });
 
-  const token = await jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
-    expiresIn: "365d",
-  });
+    issueTokens(res, author._id);
 
-  res.cookie("author", token, {
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 365 * 1000,
-    secure: process.env.NODE_ENV === "production" ? true : false,
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-  });
-  res.status(200).json({ author });
+    res.status(200).json({ author });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed" });
+  }
+};
+
+const refresh = async (req, res) => {
+  const refreshToken = req.cookies?.author_refresh;
+  if (!refreshToken) {
+    return res.status(401).json({ error: "Refresh token missing" });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    const author = await Author.findById(decoded.userData.id);
+    if (!author) {
+      return res.status(401).json({ error: "Author no longer exists" });
+    }
+
+    // Issue a new 15-minute access token
+    const accessToken = jwt.sign({ userData: { id: author._id } }, JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    res.cookie("author_access", accessToken, {
+      ...cookieBaseOptions,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "Access token refreshed" });
+  } catch (err) {
+    console.log(err);
+    return res.status(401).json({ error: "Invalid or expired refresh token" });
+  }
 };
 
 const updateAvatar = async (req, res) => {
@@ -71,7 +127,6 @@ const updateAvatar = async (req, res) => {
       { profilePicture: avatarUrl },
       { new: true },
     ).select("name email profilePicture");
-    console.log(updated);
 
     if (!updated) {
       return res.status(404).json({ error: "Author not found" });
@@ -79,20 +134,16 @@ const updateAvatar = async (req, res) => {
 
     res.status(200).json({ message: "Avatar updated", author: updated });
   } catch (err) {
-    console.log("Avatar update error:", err.stack);
+    console.error("Avatar update error:", err.stack);
     res.status(500).json({ error: "Could not update avatar" });
   }
 };
 
 const logout = (req, res) => {
   res
-    .clearCookie("author", {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 365 * 1000,
-      scure: false,
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    })
-    .status(204)
+    .clearCookie("author_access", cookieBaseOptions)
+    .clearCookie("author_refresh", cookieBaseOptions)
+    .status(200)
     .json({ message: "Logged out" });
 };
 
@@ -108,9 +159,12 @@ const handleResetMail = async (req, res) => {
     const resetKey = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = Date.now() + 24 * 60 * 60 * 1000;
 
-    author.resetKey = bcrypt.hash(resetKey);
+    // Fixed: Added await to bcrypt.hash
+    author.resetKey = await bcrypt.hash(resetKey, 10);
     author.resetKeyExpires = expiry;
+    author.resetKeyVerified = false;
     await author.save();
+
     const from = `"Domain Journals" <no-reply@domainjournals.com>`;
 
     await sendMail({
@@ -163,7 +217,6 @@ const handleVerifyKey = async (req, res) => {
     }
 
     const now = Date.now();
-
     const match = await bcrypt.compare(resetKey, author.resetKey);
 
     if (!match) {
@@ -173,8 +226,9 @@ const handleVerifyKey = async (req, res) => {
     if (author.resetKeyExpires < now) {
       return res.status(410).json({ error: "Reset key has expired" });
     }
+
     author.resetKeyVerified = true;
-    author.save();
+    await author.save(); // Fixed: Added await
 
     res.status(200).json({ message: "Reset key verified" });
   } catch (err) {
@@ -187,7 +241,7 @@ const handleResetPassword = async (req, res) => {
   const { userId, resetKey, newPassword } = req.body;
 
   if (!userId || !resetKey || !newPassword)
-    return res.status(400).json({ error: "Missing required field (id)" });
+    return res.status(400).json({ error: "Missing required fields" });
 
   try {
     const author = await Author.findById(userId);
@@ -195,10 +249,16 @@ const handleResetPassword = async (req, res) => {
 
     if (
       !author.resetKey ||
-      author.resetKey !== resetKey ||
+      !author.resetKeyExpires ||
       Date.now() > author.resetKeyExpires
     ) {
       return res.status(403).json({ error: "Invalid or expired reset key" });
+    }
+
+    // Fixed: Properly compare plaintext resetKey against bcrypt hash
+    const match = await bcrypt.compare(resetKey, author.resetKey);
+    if (!match) {
+      return res.status(403).json({ error: "Invalid reset key" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -206,15 +266,13 @@ const handleResetPassword = async (req, res) => {
 
     author.resetKey = undefined;
     author.resetKeyExpires = undefined;
+    author.resetKeyVerified = undefined;
 
     await author.save();
+
     res
-      .clearCookie("author", {
-        httpOnly: true,
-        maxAge: 60 * 60 * 24 * 365 * 1000,
-        scure: false,
-        sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      })
+      .clearCookie("author_access", cookieBaseOptions)
+      .clearCookie("author_refresh", cookieBaseOptions)
       .status(200)
       .json({ message: "Password reset successful" });
   } catch (err) {
@@ -224,11 +282,16 @@ const handleResetPassword = async (req, res) => {
 };
 
 const getCurrentUser = async (req, res) => {
-  const userId = req.userId;
-  const author = await Author.findById(userId).select(
-    "-password -resetKey -resetKeyExpires",
-  );
-  res.status(200).json(author);
+  try {
+    const userId = req.userId;
+    const author = await Author.findById(userId).select(
+      "-password -resetKey -resetKeyExpires",
+    );
+    res.status(200).json(author);
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
 };
 
 const editDetails = async (req, res) => {
@@ -236,14 +299,18 @@ const editDetails = async (req, res) => {
     const { name, level, department, matricNumber } = req.body;
     const id = req.userId;
     const author = await Author.findById(id);
+    if (!author) return res.status(404).json({ error: "Author not found" });
+
     if (name) author.name = name;
     if (level) author.level = level;
     if (department) author.department = department;
     if (matricNumber) author.matricNumber = matricNumber;
+
     const result = await author.save();
     res.json(result);
   } catch (error) {
-    console.log(error);
+    console.error("editDetails error:", error);
+    res.status(500).json({ error: "Could not update details" });
   }
 };
 
@@ -256,29 +323,32 @@ const verifyResetToken = async (req, res) => {
         .status(400)
         .json({ error: "Missing parameters, token or password" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     if (!decoded) return res.status(400).json({ error: "Invalid token" });
-    const hashed = await bcrypt.hash(password, 10);
 
+    const hashed = await bcrypt.hash(password, 10);
     const id = decoded.id;
 
     const author = await Author.findById(id);
-    if (!author.adminReset)
-      return res.status(400).json({ error: "Link already used" });
+    if (!author || !author.adminReset)
+      return res.status(400).json({ error: "Link already used or invalid" });
+
     author.password = hashed;
     author.adminReset = false;
 
-    author.save();
+    await author.save(); // Fixed: Added await
     res.json({ message: "Password reset successful" });
   } catch (err) {
-    console.log(err);
+    console.error("verifyResetToken error:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 module.exports = {
   signup,
   login,
   logout,
+  refresh,
   getCurrentUser,
   updateAvatar,
   handleResetMail,

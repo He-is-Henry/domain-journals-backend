@@ -3,11 +3,13 @@ const User = require("../model/User");
 
 const verifyAdminJWT = async (req, res, next) => {
   try {
-    const token = req.cookies?.admin;
-    console.log(token);
+    const token = req.cookies?.admin_access;
 
     if (!token) {
-      return res.status(401).json({ error: "Token not found" });
+      return res.status(401).json({
+        error: "Access token missing",
+        code: "ADMIN_TOKEN_EXPIRED",
+      });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -23,12 +25,17 @@ const verifyAdminJWT = async (req, res, next) => {
     req.name = user.name;
     req.role = user.role;
 
-    console.log(user.role);
     if (user.role === "editor") req.access = user.access;
 
     next();
   } catch (error) {
-    console.log("JWT ADMIN VERIFICATION", error);
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        error: "Access token expired",
+        code: "ADMIN_TOKEN_EXPIRED",
+      });
+    }
+    console.error("JWT ADMIN VERIFICATION ERROR:", error);
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 };

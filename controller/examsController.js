@@ -158,7 +158,11 @@ const takeExam = async (req, res) => {
           score,
           totalScore: exam.questions.length,
         });
-        exam.attempts = exam.attempts.filter((a) => a.user !== user);
+
+        exam.attempts = exam.attempts.filter(
+          (a) => a.user.toString() !== user.toString(),
+        );
+
         await exam.save();
         await deleteDraft(exam._id, user);
         return res.status(400).json({
@@ -198,6 +202,8 @@ const editExam = async (req, res) => {
       throw new Error("invalid data");
     if (isNaN(duration)) duration = Number(duration);
     const exam = await Exam.findById(examId);
+
+    if (!exam) return res.status(404).json({ error: "Cannot find exam" });
 
     if (exam.locked) {
       if (locked !== false) {

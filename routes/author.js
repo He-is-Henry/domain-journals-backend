@@ -6,6 +6,7 @@ const verifyJWT = require("../middleware/verifyJWT");
 router.patch("/", verifyJWT, authorController.editDetails);
 router.post("/signup", authorController.signup);
 router.post("/login", authorController.login);
+router.post("/refresh", authorController.refresh);
 router.post("/logout", authorController.logout);
 router.post("/reset", authorController.handleResetMail);
 router.post("/verify", authorController.handleVerifyKey);

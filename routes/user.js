@@ -16,13 +16,16 @@ router.post("/resetAuthor", userController.resetAuthorPassword);
 router.post("/resetPW", userController.handleResetPassword);
 router.get("/me", verifyAdminJWT, userController.getCurrentUser);
 router.post("/login", userController.login);
+router.post("/refresh", userController.refresh);
 router.post("/logout", userController.logout);
 router.patch("/avatar", verifyAdminJWT, userController.updateAvatar);
+
 router
   .route("/:userId")
   .get(verifyAdminJWT, verifyRoles("admin"), userController.getUser)
   .patch(verifyAdminJWT, verifyRoles("admin"), userController.changeRole)
   .delete(verifyAdminJWT, verifyRoles("admin"), userController.deleteUser);
+
 router.patch("/complete/:token", userController.completeInvite);
 
 module.exports = router;
