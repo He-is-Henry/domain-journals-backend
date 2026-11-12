@@ -128,11 +128,17 @@ const getAllAcceptedManuscripts = async (req, res) => {
   const { journal } = req.query;
 
   const query = journal ? { journal } : {};
+  const isAdmin = req.role === "admin";
+  const isEditor = req.role === "editor";
+
+  const isPrivileged = isAdmin || isEditor;
 
   try {
     const manuscripts = await Accepted.find(query).sort({ createdAt: -1 });
 
-    const cleanedManuscripts = manuscripts.map((m) => removeCoAuthorMails(m));
+    const cleanedManuscripts = isPrivileged
+      ? manuscripts
+      : manuscripts.map((m) => removeCoAuthorMails(m));
 
     res.json(cleanedManuscripts);
   } catch (e) {
