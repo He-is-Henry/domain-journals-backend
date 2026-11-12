@@ -24,6 +24,7 @@ app.use(cors(corsOptions));
 
 app.use(logEvents);
 
+app.use(require("./middleware/verifyOptionalJWT"));
 app.use("/", require("./routes"));
 
 app.use(errorHandler);

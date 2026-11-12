@@ -132,6 +132,7 @@ const getAllAcceptedManuscripts = async (req, res) => {
   const isEditor = req.role === "editor";
 
   const isPrivileged = isAdmin || isEditor;
+  console.log({ role: req.role, isAdmin, isEditor, isPrivileged });
 
   try {
     const manuscripts = await Accepted.find(query).sort({ createdAt: -1 });
@@ -293,7 +294,12 @@ const updateAcceptedManuscript = async (req, res) => {
     const updated = await Accepted.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true },
+      {
+        new: true,
+        runValidators: true,
+        overwriteImmutable: true,
+        timestamps: false,
+      },
     );
 
     if (!updated) {
