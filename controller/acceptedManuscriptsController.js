@@ -4,7 +4,8 @@ const Archive = require("../model/Archive");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
-const removeCoAuthorMails = (manuscript) => {
+const removeCoAuthorMails = (m) => {
+  const manuscript = m.toObject();
   return {
     ...manuscript,
     coAuthors: manuscript.coAuthors.map((ca) => ({ name: ca.name })),
