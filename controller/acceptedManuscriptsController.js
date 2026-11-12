@@ -4,12 +4,20 @@ const Archive = require("../model/Archive");
 const { Manuscript } = require("../model/Manuscript");
 const sendMail = require("../uttils/sendMail");
 
+const removeCoAuthorMails = (manuscript) => {
+  return {
+    ...manuscript,
+    coAuthors: manuscript.coAuthors.map((ca) => ({ name: ca.name })),
+  };
+};
+
 const getManuscript = async (req, res) => {
   const { id } = req.params;
   if (!id) return res.status(400).json({ error: "Id is required" });
   const manuscript = await Accepted.findById(id);
   if (!manuscript) return res.json(404).json({ error: "Manuscript not found" });
-  res.json(manuscript);
+
+  res.json(removeCoAuthorMails(manuscript));
 };
 
 const getBySlug = async (req, res) => {
@@ -29,7 +37,7 @@ const getBySlug = async (req, res) => {
       error: "Invalid manuscript slug",
     });
 
-  res.json(manuscript);
+  res.json(removeCoAuthorMails(manuscript));
 };
 
 const getUserManuscript = async (req, res) => {
@@ -55,7 +63,9 @@ const getByIssue = async (req, res) => {
     year: latestYear,
   });
 
-  res.json(currentIssue);
+  const cleanedIssue = currentIssue.map((c) => removeCoAuthorMails(c));
+
+  res.json(cleanedIssue);
 };
 
 const getPublishPreview = async (req, res) => {
@@ -120,7 +130,10 @@ const getAllAcceptedManuscripts = async (req, res) => {
 
   try {
     const manuscripts = await Accepted.find(query).sort({ createdAt: -1 });
-    res.json(manuscripts);
+
+    const cleanedManuscripts = manuscripts.map((m) => removeCoAuthorMails(m));
+
+    res.json(cleanedManuscripts);
   } catch (e) {
     console.log(e);
     res.status(500).json({ error: "Something went wrong" });
@@ -135,7 +148,12 @@ const getRecentManuscripts = async (req, res) => {
     const recentManuscripts = await Accepted.find(query)
       .sort({ createdAt: -1 })
       .limit(3);
-    res.json(recentManuscripts);
+
+    const cleanedManuscripts = recentManuscripts.map((m) =>
+      removeCoAuthorMails(m),
+    );
+
+    res.json(cleanedManuscripts);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Something went wrong" });
@@ -144,8 +162,10 @@ const getRecentManuscripts = async (req, res) => {
 
 const getArchive = async (req, res) => {
   const { name } = req.params;
-  const manuscripts = await Accepted.find({ journal: name });
+  const manuscriptsList = await Accepted.find({ journal: name });
   const archiveList = await Archive.find({ journal: name }).lean();
+
+  const manuscripts = manuscriptsList.map((m) => removeCoAuthorMails(m));
 
   const archive = archiveList.map((a) => ({
     ...a,
