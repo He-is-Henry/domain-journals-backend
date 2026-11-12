@@ -253,6 +253,7 @@ const updateAcceptedManuscript = async (req, res) => {
       "customId",
       "slug",
       "content",
+      "createdAt",
     ];
 
     allowedFields.forEach((field) => {
