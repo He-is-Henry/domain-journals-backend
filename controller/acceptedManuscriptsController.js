@@ -282,6 +282,7 @@ const updateAcceptedManuscript = async (req, res) => {
       "slug",
       "content",
       "createdAt",
+      "affiliation",
     ];
 
     allowedFields.forEach((field) => {
@@ -357,6 +358,7 @@ const createdAcceptedManuscript = async (
     country: manuscript.country,
     paymentReference: manuscript.paymentReference,
     articleType: manuscript.articleType,
+    affiliation: manuscript.affiliation,
     issue,
     slug,
     content,

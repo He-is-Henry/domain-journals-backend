@@ -12,6 +12,7 @@ const AcceptedManuscriptSchema = new Schema(
       },
     ],
     authorId: { type: String, required: true },
+    affiliation: String,
     email: { type: String, required: true },
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
